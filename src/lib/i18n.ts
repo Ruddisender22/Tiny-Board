@@ -39,6 +39,12 @@ export const translations = {
     themeDark: "Dark",
     changelogEntries: [
       {
+        version: "1.0.3",
+        changes: [
+          "Fixed contrast of bottom-left icons and footer in Mixed theme",
+        ],
+      },
+      {
         version: "1.0.2",
         changes: [
           "Fixed Full-Color text contrast in Mixed theme",
@@ -132,6 +138,12 @@ export const translations = {
     themeMixed: "Mixto",
     themeDark: "Oscuro",
     changelogEntries: [
+      {
+        version: "1.0.3",
+        changes: [
+          "Corregido el contraste de los iconos inferiores en el tema mixto",
+        ],
+      },
       {
         version: "1.0.2",
         changes: [

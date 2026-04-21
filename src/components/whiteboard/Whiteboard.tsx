@@ -489,10 +489,10 @@ export const Whiteboard = () => {
     {/* Bottom-left buttons: Help + Settings */}
     <div className="fixed bottom-4 left-4 z-50 flex items-center gap-2">
       <button type="button" aria-label="Help" onClick={() => setHelpOpen(true)}
-        className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-card/80 backdrop-blur border border-border text-muted-foreground/70 hover:text-foreground hover:bg-card transition-colors"
+        className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-card/80 backdrop-blur border border-border text-card-foreground/70 hover:text-card-foreground hover:bg-card transition-colors"
       ><HelpCircle className="h-4 w-4" /></button>
       <button type="button" aria-label="Settings" onClick={() => setSettingsOpen(true)}
-        className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-card/80 backdrop-blur border border-border text-muted-foreground/70 hover:text-foreground hover:bg-card transition-colors"
+        className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-card/80 backdrop-blur border border-border text-card-foreground/70 hover:text-card-foreground hover:bg-card transition-colors"
       ><Settings className="h-4 w-4" /></button>
     </div>
 
@@ -503,9 +503,9 @@ export const Whiteboard = () => {
       fullColor={fullColor} onFullColorChange={handleFullColorChange}
     />
 
-    <footer className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 text-xs text-muted-foreground/70 pointer-events-none">
+    <footer className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 text-xs pointer-events-none">
       <a href={`https://github.com/${GITHUB_USER}`} target="_blank" rel="noopener noreferrer"
-        className="inline-flex items-center gap-1.5 rounded-full bg-card/80 backdrop-blur px-3 py-1.5 border border-border hover:text-foreground hover:bg-card transition-colors pointer-events-auto"
+        className="inline-flex items-center gap-1.5 rounded-full bg-card/80 backdrop-blur px-3 py-1.5 border border-border text-card-foreground/70 hover:text-card-foreground hover:bg-card transition-colors pointer-events-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <Github className="h-3.5 w-3.5" />
@@ -513,7 +513,7 @@ export const Whiteboard = () => {
       </a>
     </footer>
 
-    <span className="fixed bottom-4 right-4 z-50 text-[10px] text-muted-foreground/40 select-none">
+    <span className="fixed bottom-4 right-4 z-50 text-[10px] text-foreground/40 select-none">
       v{version}
     </span>
     </>
