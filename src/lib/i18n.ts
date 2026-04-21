@@ -39,6 +39,14 @@ export const translations = {
     themeDark: "Dark",
     changelogEntries: [
       {
+        version: "1.0.5",
+        changes: [
+          "Global Enter shortcut to create tasks",
+          "Fixed sticky create-task frame disappearing bug",
+          "Fixed mobile keyboard Enter submission bug",
+        ],
+      },
+      {
         version: "1.0.4",
         changes: [
           "Mobile adaptation with touch support",
@@ -147,6 +155,14 @@ export const translations = {
     themeMixed: "Mixto",
     themeDark: "Oscuro",
     changelogEntries: [
+      {
+        version: "1.0.5",
+        changes: [
+          "Atajo global (Enter) para crear tareas",
+          "Arreglado bug visual del botón flotante de crear tarea",
+          "Arreglado envío con teclado en móviles",
+        ],
+      },
       {
         version: "1.0.4",
         changes: [

@@ -57,9 +57,11 @@ export const CreateTaskFrame = forwardRef<CreateTaskFrameHandle, CreateTaskFrame
 
     const handleTagKey = (e: KeyboardEvent<HTMLInputElement>) => {
       if (e.key === "Enter" || e.key === "Tab" || e.key === ",") {
+        e.preventDefault();
         if (tagDraft.trim()) {
-          e.preventDefault();
           commitTag();
+        } else if (e.key === "Enter") {
+          submit();
         }
       } else if (e.key === "Backspace" && !tagDraft && tags.length) {
         setTags((prev) => prev.slice(0, -1));

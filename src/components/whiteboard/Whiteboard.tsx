@@ -304,7 +304,22 @@ export const Whiteboard = () => {
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, []);
+  }, [displayedTasks.length]);
+
+  // Global Enter shortcut
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Enter") {
+        const tag = document.activeElement?.tagName.toLowerCase();
+        if (tag !== "input" && tag !== "textarea" && tag !== "button" && !creating && !helpOpen && !settingsOpen) {
+          e.preventDefault();
+          setCreating(true);
+        }
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [creating, helpOpen, settingsOpen]);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
@@ -399,12 +414,15 @@ export const Whiteboard = () => {
 
   return (
     <>
-    <main
-      ref={boardRef}
+    <div
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      className="relative min-h-screen w-full bg-background bg-dot-pattern"
+    >
+    <main
+      ref={boardRef}
       onClick={handleBoardClick}
-      className="relative min-h-screen w-full bg-background bg-dot-pattern px-4 py-12 sm:py-20 pb-32"
+      className="relative min-h-screen w-full px-4 py-12 sm:py-20 pb-32"
     >
       <div className="mx-auto w-full max-w-2xl">
         <header className="mb-10 text-center">
@@ -484,13 +502,16 @@ export const Whiteboard = () => {
 
     {/* Sticky create frame */}
     {frameSticky && showCreateFrame && (
-      <div className="fixed bottom-16 left-1/2 -translate-x-1/2 z-40 w-full max-w-2xl px-4">
-        <CreateTaskFrame ref={frameRef} visible active={creating}
-          onActivate={() => setCreating(true)} onSubmit={addTask} onCancel={() => setCreating(false)}
-          lang={lang}
-        />
+      <div className="fixed bottom-16 left-1/2 -translate-x-1/2 z-40 w-full max-w-2xl px-4 pointer-events-none">
+        <div className="pointer-events-auto">
+          <CreateTaskFrame ref={frameRef} visible active={creating}
+            onActivate={() => setCreating(true)} onSubmit={addTask} onCancel={() => setCreating(false)}
+            lang={lang}
+          />
+        </div>
       </div>
     )}
+    </div>
 
     {/* Bottom-left buttons: Help + Settings */}
     <div className="fixed bottom-4 left-4 z-50 flex items-center gap-2">
