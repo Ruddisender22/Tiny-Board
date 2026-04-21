@@ -1,50 +1,29 @@
 # Ruddis' Tiny Board
 
-A clean, minimalist task whiteboard built with React and TypeScript.
+A minimal task board that lives in your browser. No accounts, no servers — just open it and start adding tasks.
 
-🌐 **Live Demo:** [ruddisender22.github.io/Tiny-Board](https://ruddisender22.github.io/Tiny-Board/)
+**Live:** [ruddisender22.github.io/Tiny-Board](https://ruddisender22.github.io/Tiny-Board/)
 
-## ✨ Features
+## How it works
 
-- **Create tasks** — Hover over the board and start typing to add a new task
-- **Inline rename** — Double-click any task name to edit it in place
-- **Drag & drop reorder** — Grab the handle to rearrange your tasks
-- **Custom colors** — Click the color dot to pick any hue with a smooth slider
-- **Tags & filtering** — Add tags to organize tasks, then filter by tag to focus
-- **Complete & delete** — Right-click a task to mark it done (sinks to bottom), or hit ✕ to remove it
-- **Persistent storage** — All tasks are saved to LocalStorage automatically
-- **Responsive design** — Works great on desktop and mobile
+- **Hover** over the board to create a new task.
+- **Double-click** a task name to edit it.
+- **Right-click** a task to mark it complete (or undo).
+- **Drag** the handle to reorder.
+- Click the **color dot** to pick a color, or toggle **Full-Color** in settings.
+- Add **tags** to organize, then filter by tag or by status (All / Active / Completed).
+- Switch between **Light**, **Mixed**, and **Dark** themes from settings.
+- Available in **English** and **Spanish**.
 
-## 🛠️ Tech Stack
+Everything saves to your browser automatically.
 
-- **React 18** + **TypeScript**
-- **Vite** — Fast dev server and build tool
-- **Framer Motion** — Smooth animations and transitions
-- **dnd-kit** — Accessible drag & drop
-- **Tailwind CSS** — Utility-first styling
-- **Radix UI** — Headless, accessible popover
-- **LocalStorage** — Client-side persistence (no backend needed)
-
-## 🚀 Getting Started
+## Run locally
 
 ```bash
-# Install dependencies
 npm install
-
-# Start the dev server
 npm run dev
 ```
 
-The app will be available at `http://localhost:8080/`.
-
-## 📦 Build for Production
-
-```bash
-npm run build
-```
-
-The output will be in the `dist/` directory, ready to deploy.
-
-## 📄 License
+## License
 
 MIT

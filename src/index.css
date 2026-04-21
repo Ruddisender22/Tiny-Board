@@ -41,35 +41,35 @@
 
   /* Mixed: dark background, silver/light task cards */
   [data-theme="mixed"] {
-    --background: 222 47% 7%;
-    --foreground: 210 40% 92%;
+    --background: 220 25% 12%;
+    --foreground: 210 30% 90%;
 
-    --card: 220 20% 18%;
-    --card-foreground: 210 40% 92%;
+    --card: 220 14% 92%;
+    --card-foreground: 220 13% 15%;
 
-    --popover: 220 20% 16%;
-    --popover-foreground: 210 40% 92%;
+    --popover: 220 14% 90%;
+    --popover-foreground: 220 13% 15%;
 
-    --primary: 217 89% 60%;
-    --primary-foreground: 222 47% 7%;
+    --primary: 217 89% 55%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 16% 14%;
-    --secondary-foreground: 210 40% 92%;
+    --secondary: 220 18% 16%;
+    --secondary-foreground: 210 30% 90%;
 
-    --muted: 220 16% 14%;
-    --muted-foreground: 215 16% 56%;
+    --muted: 220 18% 16%;
+    --muted-foreground: 215 12% 55%;
 
-    --accent: 220 16% 14%;
-    --accent-foreground: 210 40% 92%;
+    --accent: 220 18% 16%;
+    --accent-foreground: 210 30% 90%;
 
     --destructive: 4 85% 55%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 220 14% 22%;
-    --input: 220 14% 22%;
-    --ring: 217 89% 60%;
+    --border: 220 14% 24%;
+    --input: 220 14% 24%;
+    --ring: 217 89% 55%;
 
-    --skeleton-border: 220 14% 16%;
+    --skeleton-border: 220 14% 18%;
     --task-shadow: 220 14% 6%;
   }
 

@@ -39,24 +39,25 @@ export const translations = {
     themeDark: "Dark",
     changelogEntries: [
       {
-        version: "2.1.0",
+        version: "1.0.0",
         changes: [
-          "Settings panel with gear icon",
+          "First stable release",
+          "Settings panel: theme, full-color, language",
+          "Three themes: Light, Mixed, Dark",
           "Full-Color mode for task cards",
-          "Theme selector: Light / Mixed / Dark",
-          "Language moved into settings",
+          "Improved mixed theme with lighter cards",
         ],
       },
       {
-        version: "2.0.1",
+        version: "0.4 beta",
         changes: [
           "Help modal redesign with card layout",
           "Language toggle (English / Spanish)",
-          "Added changelog inside help modal",
+          "Changelog inside help modal",
         ],
       },
       {
-        version: "2.0.0",
+        version: "0.3 beta",
         changes: [
           "Help button with controls explanation",
           "Sticky create-task frame when scrolling",
@@ -65,21 +66,20 @@ export const translations = {
         ],
       },
       {
-        version: "1.2.0",
+        version: "0.2 beta",
         changes: [
           "Renamed to Ruddis' Tiny Board",
           "Tag filtering system",
           "Completed tasks sink to bottom",
-          "Removed all Lovable references",
-          "Major cleanup: removed 40+ unused components",
+          "Major cleanup and branding overhaul",
         ],
       },
       {
-        version: "1.1.0",
+        version: "0.1 beta",
         changes: [
           "Inline task renaming (double-click)",
           "Right-click to toggle completion",
-          "Version label in bottom-right corner",
+          "Initial version tracking",
         ],
       },
     ],
@@ -121,16 +121,17 @@ export const translations = {
     themeDark: "Oscuro",
     changelogEntries: [
       {
-        version: "2.1.0",
+        version: "1.0.0",
         changes: [
-          "Panel de ajustes con icono de engranaje",
-          "Modo Color completo para tarjetas de tareas",
-          "Selector de tema: Claro / Mixto / Oscuro",
-          "Idioma movido a los ajustes",
+          "Primera versión estable",
+          "Panel de ajustes: tema, color completo, idioma",
+          "Tres temas: Claro, Mixto, Oscuro",
+          "Modo Color completo para tarjetas",
+          "Tema mixto mejorado con tarjetas más claras",
         ],
       },
       {
-        version: "2.0.1",
+        version: "0.4 beta",
         changes: [
           "Rediseño del modal de ayuda con tarjetas",
           "Selector de idioma (Inglés / Español)",
@@ -138,7 +139,7 @@ export const translations = {
         ],
       },
       {
-        version: "2.0.0",
+        version: "0.3 beta",
         changes: [
           "Botón de ayuda con explicación de controles",
           "Creación de tareas fija al hacer scroll",
@@ -147,21 +148,20 @@ export const translations = {
         ],
       },
       {
-        version: "1.2.0",
+        version: "0.2 beta",
         changes: [
           "Renombrado a Ruddis' Tiny Board",
           "Sistema de filtrado por etiquetas",
           "Las tareas completadas bajan al final",
-          "Eliminadas todas las referencias a Lovable",
-          "Limpieza: eliminados 40+ componentes sin usar",
+          "Limpieza y cambio de marca completo",
         ],
       },
       {
-        version: "1.1.0",
+        version: "0.1 beta",
         changes: [
           "Renombrar tareas en línea (doble clic)",
           "Clic derecho para completar/descompletar",
-          "Etiqueta de versión en la esquina inferior derecha",
+          "Seguimiento de versión inicial",
         ],
       },
     ],
