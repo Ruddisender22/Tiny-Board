@@ -39,6 +39,12 @@ export const translations = {
     themeDark: "Dark",
     changelogEntries: [
       {
+        version: "1.0.2",
+        changes: [
+          "Fixed Full-Color text contrast in Mixed theme",
+        ],
+      },
+      {
         version: "1.0.1",
         changes: [
           "Fixed text contrast on task cards in Mixed theme",
@@ -126,6 +132,12 @@ export const translations = {
     themeMixed: "Mixto",
     themeDark: "Oscuro",
     changelogEntries: [
+      {
+        version: "1.0.2",
+        changes: [
+          "Corregido el contraste de texto del modo Color completo (tema mixto)",
+        ],
+      },
       {
         version: "1.0.1",
         changes: [

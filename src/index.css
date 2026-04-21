@@ -130,6 +130,9 @@
   .task-shadow-hover {
     box-shadow: 0 2px 4px hsl(var(--task-shadow) / 0.1), 0 8px 24px hsl(var(--task-shadow) / 0.12);
   }
+  .full-color-card {
+    --card-foreground: var(--foreground);
+  }
   .bg-dot-pattern {
     background-image: radial-gradient(hsl(var(--skeleton-border) / 0.7) 1px, transparent 1px);
     background-size: 22px 22px;

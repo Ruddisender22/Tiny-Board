@@ -128,7 +128,7 @@ export const TaskCard = ({
       className={cn(
         "group relative flex items-center gap-3 rounded-2xl border task-shadow",
         "px-5 py-4 cursor-default select-none transition-shadow hover:task-shadow-hover",
-        fullColor ? "border-transparent" : "border-border bg-card",
+        fullColor ? "border-transparent full-color-card" : "border-border bg-card",
         overlay && "task-shadow-hover ring-2 ring-primary/20 cursor-grabbing rotate-1"
       )}
       {...(fullColor
