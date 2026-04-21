@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { version } from "../../../package.json";
 import { AnimatePresence } from "framer-motion";
 import {
@@ -16,7 +16,7 @@ import {
   arrayMove,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { Github } from "lucide-react";
+import { Github, X } from "lucide-react";
 import { TaskCard, Task } from "./TaskCard";
 import { CreateTaskFrame, CreateTaskFrameHandle } from "./CreateTaskFrame";
 import { TaskColor, DEFAULT_HUE } from "@/lib/taskColors";
@@ -71,11 +71,19 @@ const loadTasks = (): Task[] => {
   }
 };
 
+/** Sort tasks so completed ones sink to the bottom while preserving relative order. */
+const sortWithCompletedLast = (tasks: Task[]): Task[] => {
+  const active = tasks.filter((t) => !t.completed);
+  const done = tasks.filter((t) => t.completed);
+  return [...active, ...done];
+};
+
 export const Whiteboard = () => {
   const [tasks, setTasks] = useState<Task[]>(() => loadTasks());
   const [hovered, setHovered] = useState(false);
   const [creating, setCreating] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [filterTag, setFilterTag] = useState<string | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<CreateTaskFrameHandle>(null);
 
@@ -86,6 +94,20 @@ export const Whiteboard = () => {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } })
   );
+
+  // Collect all unique tags across tasks
+  const allTags = useMemo(() => {
+    const set = new Set<string>();
+    tasks.forEach((t) => t.tags.forEach((tag) => set.add(tag)));
+    return Array.from(set).sort();
+  }, [tasks]);
+
+  // Sorted and filtered task list
+  const displayedTasks = useMemo(() => {
+    const sorted = sortWithCompletedLast(tasks);
+    if (!filterTag) return sorted;
+    return sorted.filter((t) => t.tags.includes(filterTag));
+  }, [tasks, filterTag]);
 
   const addTask = useCallback((name: string, color: TaskColor, tags: string[]) => {
     setTasks((prev) => [
@@ -163,12 +185,45 @@ export const Whiteboard = () => {
       <div className="mx-auto w-full max-w-2xl">
         <header className="mb-10 text-center">
           <h1 className="text-4xl font-semibold tracking-tight text-foreground">
-            Tiny Board
+            Ruddis' Tiny Board
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Hover anywhere to create a task. Drag to reorder. Click to complete.
+            Hover anywhere to create a task. Drag to reorder. Right-click to complete.
           </p>
         </header>
+
+        {/* Tag filter bar */}
+        {allTags.length > 0 && (
+          <div className="mb-6 flex items-center gap-2 flex-wrap justify-center">
+            <span className="text-xs text-muted-foreground/60 mr-1">Filter:</span>
+            {allTags.map((tag) => (
+              <button
+                key={tag}
+                type="button"
+                onClick={() => setFilterTag(filterTag === tag ? null : tag)}
+                className={`
+                  inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium transition-all
+                  ${filterTag === tag
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  }
+                `}
+              >
+                {tag}
+                {filterTag === tag && <X className="h-3 w-3" />}
+              </button>
+            ))}
+            {filterTag && (
+              <button
+                type="button"
+                onClick={() => setFilterTag(null)}
+                className="text-xs text-muted-foreground/60 hover:text-muted-foreground underline ml-1 transition-colors"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+        )}
 
         <DndContext
           sensors={sensors}
@@ -178,12 +233,12 @@ export const Whiteboard = () => {
           onDragCancel={() => setActiveId(null)}
         >
           <SortableContext
-            items={tasks.map((t) => t.id)}
+            items={displayedTasks.map((t) => t.id)}
             strategy={verticalListSortingStrategy}
           >
             <div className="flex flex-col gap-3">
               <AnimatePresence initial={false}>
-                {tasks.map((task) => (
+                {displayedTasks.map((task) => (
                   <TaskCard
                     key={task.id}
                     task={task}

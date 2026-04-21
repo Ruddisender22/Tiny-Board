@@ -1,4 +1,4 @@
-# Tiny Board
+# Ruddis' Tiny Board
 
 A clean, minimalist task whiteboard built with React and TypeScript.
 
@@ -10,8 +10,8 @@ A clean, minimalist task whiteboard built with React and TypeScript.
 - **Inline rename** — Double-click any task name to edit it in place
 - **Drag & drop reorder** — Grab the handle to rearrange your tasks
 - **Custom colors** — Click the color dot to pick any hue with a smooth slider
-- **Tags** — Add and remove tags to organize your tasks
-- **Complete & delete** — Click a task to mark it done, or hit ✕ to remove it
+- **Tags & filtering** — Add tags to organize tasks, then filter by tag to focus
+- **Complete & delete** — Right-click a task to mark it done (sinks to bottom), or hit ✕ to remove it
 - **Persistent storage** — All tasks are saved to LocalStorage automatically
 - **Responsive design** — Works great on desktop and mobile
 
@@ -22,7 +22,7 @@ A clean, minimalist task whiteboard built with React and TypeScript.
 - **Framer Motion** — Smooth animations and transitions
 - **dnd-kit** — Accessible drag & drop
 - **Tailwind CSS** — Utility-first styling
-- **Radix UI** — Headless, accessible UI primitives
+- **Radix UI** — Headless, accessible popover
 - **LocalStorage** — Client-side persistence (no backend needed)
 
 ## 🚀 Getting Started
