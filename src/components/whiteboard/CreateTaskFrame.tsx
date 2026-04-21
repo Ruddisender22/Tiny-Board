@@ -97,18 +97,18 @@ export const CreateTaskFrame = forwardRef<CreateTaskFrameHandle, CreateTaskFrame
                 }
               }}
               placeholder="What needs to be done?"
-              className="flex-1 min-w-[140px] bg-transparent text-base font-medium text-foreground placeholder:text-muted-foreground/60 outline-none"
+              className="flex-1 min-w-[140px] bg-transparent text-base font-medium text-card-foreground placeholder:text-card-foreground/60 outline-none"
             />
             {tags.map((tag) => (
               <span
                 key={tag}
-                className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
+                className="inline-flex items-center gap-1 rounded-md bg-card-foreground/10 px-2 py-0.5 text-xs font-medium text-card-foreground/70"
               >
                 {tag}
                 <button
                   type="button"
                   onClick={() => setTags((prev) => prev.filter((t) => t !== tag))}
-                  className="hover:text-foreground"
+                  className="hover:text-card-foreground"
                   aria-label={`Remove ${tag}`}
                 >
                   <X className="h-3 w-3" />
@@ -124,10 +124,10 @@ export const CreateTaskFrame = forwardRef<CreateTaskFrameHandle, CreateTaskFrame
               onKeyDown={handleTagKey}
               onBlur={() => tagDraft.trim() && commitTag()}
               placeholder="+ tag"
-              className="w-20 bg-transparent text-xs text-muted-foreground placeholder:text-muted-foreground/50 outline-none border-b border-dashed border-border focus:border-muted-foreground/40"
+              className="w-20 bg-transparent text-xs text-card-foreground/70 placeholder:text-card-foreground/50 outline-none border-b border-dashed border-card-foreground/20 focus:border-card-foreground/40"
             />
             <div className="ml-auto flex items-center gap-2">
-              <span className="text-xs text-muted-foreground/60">Color</span>
+              <span className="text-xs text-card-foreground/60">Color</span>
               <HueSlider hue={color} onChange={setColor} />
             </div>
           </div>
@@ -153,7 +153,7 @@ export const CreateTaskFrame = forwardRef<CreateTaskFrameHandle, CreateTaskFrame
             }}
             className={cn(
               "flex w-full items-center gap-3 rounded-2xl border-2 border-dashed border-skeleton-border",
-              "bg-card/40 backdrop-blur-sm px-5 py-4 text-muted-foreground/70 hover:border-muted-foreground/40 hover:text-muted-foreground transition-colors"
+              "bg-card/40 backdrop-blur-sm px-5 py-4 text-card-foreground/70 hover:border-card-foreground/40 hover:text-card-foreground transition-colors"
             )}
           >
             <Plus className="h-4 w-4" />

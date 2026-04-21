@@ -159,7 +159,7 @@ export const TaskCard = ({
         type="button"
         aria-label="Drag to reorder"
         onClick={(e) => e.stopPropagation()}
-        className="ml-1 -mr-1 cursor-grab active:cursor-grabbing text-muted-foreground/40 hover:text-muted-foreground transition-colors opacity-0 group-hover:opacity-100"
+        className="ml-1 -mr-1 cursor-grab active:cursor-grabbing text-card-foreground/40 hover:text-card-foreground/70 transition-colors opacity-0 group-hover:opacity-100"
         {...attributes}
         {...listeners}
       >
@@ -199,7 +199,7 @@ export const TaskCard = ({
             onBlur={commitName}
             onClick={(e) => e.stopPropagation()}
             className={cn(
-              "text-base font-medium text-foreground bg-transparent outline-none",
+              "text-base font-medium text-card-foreground bg-transparent outline-none",
               "border-b-2 border-primary/50 focus:border-primary transition-colors",
               "w-full max-w-xs"
             )}
@@ -207,9 +207,9 @@ export const TaskCard = ({
         ) : (
           <span
             className={cn(
-              "text-base font-medium text-foreground transition-all cursor-text",
-              "hover:border-b hover:border-dashed hover:border-muted-foreground/40",
-              task.completed && "line-through text-muted-foreground"
+              "text-base font-medium text-card-foreground transition-all cursor-text",
+              "hover:border-b hover:border-dashed hover:border-card-foreground/40",
+              task.completed && "line-through text-card-foreground/50"
             )}
             onDoubleClick={(e) => {
               e.stopPropagation();
@@ -224,7 +224,7 @@ export const TaskCard = ({
           <span
             key={tag}
             onClick={(e) => e.stopPropagation()}
-            className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
+            className="inline-flex items-center gap-1 rounded-md bg-card-foreground/10 px-2 py-0.5 text-xs font-medium text-card-foreground/70"
           >
             {tag}
             <button
@@ -233,7 +233,7 @@ export const TaskCard = ({
                 e.stopPropagation();
                 onRemoveTag(task.id, tag);
               }}
-              className="hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+              className="hover:text-card-foreground opacity-0 group-hover:opacity-100 transition-opacity"
               aria-label={`Remove ${tag}`}
             >
               <X className="h-3 w-3" />
@@ -250,7 +250,7 @@ export const TaskCard = ({
             onBlur={commitTag}
             onClick={(e) => e.stopPropagation()}
             placeholder="tag"
-            className="w-16 bg-transparent text-xs outline-none border-b border-dashed border-muted-foreground/40"
+            className="w-16 bg-transparent text-xs text-card-foreground outline-none border-b border-dashed border-card-foreground/40 placeholder:text-card-foreground/40"
           />
         ) : (
           <button
@@ -260,7 +260,7 @@ export const TaskCard = ({
               e.stopPropagation();
               setAdding(true);
             }}
-            className="inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-xs text-muted-foreground/60 hover:bg-muted hover:text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+            className="inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-xs text-card-foreground/60 hover:bg-card-foreground/10 hover:text-card-foreground opacity-0 group-hover:opacity-100 transition-opacity"
           >
             <Plus className="h-3 w-3" />
             tag
@@ -276,7 +276,7 @@ export const TaskCard = ({
           e.stopPropagation();
           onDelete(task.id);
         }}
-        className="flex-shrink-0 h-8 w-8 grid place-items-center rounded-full text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 transition-colors opacity-0 group-hover:opacity-100"
+        className="flex-shrink-0 h-8 w-8 grid place-items-center rounded-full text-card-foreground/50 hover:text-destructive hover:bg-destructive/10 transition-colors opacity-0 group-hover:opacity-100"
       >
         <X className="h-4 w-4" />
       </button>
