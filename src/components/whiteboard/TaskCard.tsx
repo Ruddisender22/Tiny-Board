@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { X, GripVertical, Plus } from "lucide-react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { useState, KeyboardEvent } from "react";
+import { useState, useRef, useEffect, KeyboardEvent } from "react";
 import { cn } from "@/lib/utils";
 import { colorVar, TaskColor } from "@/lib/taskColors";
 import { HueSlider } from "./HueSlider";
@@ -20,6 +20,7 @@ interface TaskCardProps {
   task: Task;
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
+  onRename: (id: string, name: string) => void;
   onAddTag: (id: string, tag: string) => void;
   onRemoveTag: (id: string, tag: string) => void;
   onChangeColor: (id: string, color: TaskColor) => void;
@@ -30,6 +31,7 @@ export const TaskCard = ({
   task,
   onToggle,
   onDelete,
+  onRename,
   onAddTag,
   onRemoveTag,
   onChangeColor,
@@ -40,6 +42,42 @@ export const TaskCard = ({
 
   const [tagDraft, setTagDraft] = useState("");
   const [adding, setAdding] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [nameDraft, setNameDraft] = useState(task.name);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+
+  // Keep draft in sync if the task name changes externally
+  useEffect(() => {
+    if (!editing) setNameDraft(task.name);
+  }, [task.name, editing]);
+
+  // Auto-focus and select all text when entering edit mode
+  useEffect(() => {
+    if (editing && nameInputRef.current) {
+      nameInputRef.current.focus();
+      nameInputRef.current.select();
+    }
+  }, [editing]);
+
+  const commitName = () => {
+    const trimmed = nameDraft.trim();
+    if (trimmed && trimmed !== task.name) {
+      onRename(task.id, trimmed);
+    } else {
+      setNameDraft(task.name);
+    }
+    setEditing(false);
+  };
+
+  const handleNameKey = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      commitName();
+    } else if (e.key === "Escape") {
+      setNameDraft(task.name);
+      setEditing(false);
+    }
+  };
 
   const style = overlay
     ? undefined
@@ -128,14 +166,35 @@ export const TaskCard = ({
 
       {/* Task name + tags */}
       <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
-        <span
-          className={cn(
-            "text-base font-medium text-foreground transition-all",
-            task.completed && "line-through text-muted-foreground"
-          )}
-        >
-          {task.name}
-        </span>
+        {editing ? (
+          <input
+            ref={nameInputRef}
+            value={nameDraft}
+            onChange={(e) => setNameDraft(e.target.value)}
+            onKeyDown={handleNameKey}
+            onBlur={commitName}
+            onClick={(e) => e.stopPropagation()}
+            className={cn(
+              "text-base font-medium text-foreground bg-transparent outline-none",
+              "border-b-2 border-primary/50 focus:border-primary transition-colors",
+              "w-full max-w-xs"
+            )}
+          />
+        ) : (
+          <span
+            className={cn(
+              "text-base font-medium text-foreground transition-all cursor-text",
+              "hover:border-b hover:border-dashed hover:border-muted-foreground/40",
+              task.completed && "line-through text-muted-foreground"
+            )}
+            onDoubleClick={(e) => {
+              e.stopPropagation();
+              if (!overlay) setEditing(true);
+            }}
+          >
+            {task.name}
+          </span>
+        )}
 
         {task.tags.map((tag) => (
           <span

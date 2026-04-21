@@ -122,6 +122,10 @@ export const Whiteboard = () => {
     setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, color } : t)));
   }, []);
 
+  const renameTask = useCallback((id: string, name: string) => {
+    setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, name } : t)));
+  }, []);
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveId(null);
@@ -184,6 +188,7 @@ export const Whiteboard = () => {
                     task={task}
                     onToggle={toggleTask}
                     onDelete={deleteTask}
+                    onRename={renameTask}
                     onAddTag={addTag}
                     onRemoveTag={removeTag}
                     onChangeColor={changeColor}
@@ -211,6 +216,7 @@ export const Whiteboard = () => {
                       task={t}
                       onToggle={() => {}}
                       onDelete={() => {}}
+                      onRename={() => {}}
                       onAddTag={() => {}}
                       onRemoveTag={() => {}}
                       onChangeColor={() => {}}
