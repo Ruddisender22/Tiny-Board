@@ -107,14 +107,14 @@ const HelpModal = ({ open, onClose, lang }: { open: boolean; onClose: () => void
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <button type="button" onClick={() => setTab("help")}
-                  className={`text-sm font-semibold px-3 py-1 rounded-full transition-all ${tab === "help" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                  className={`text-sm font-semibold px-3 py-1 rounded-full transition-all ${tab === "help" ? "bg-primary text-primary-foreground" : "text-card-foreground/60 hover:text-card-foreground"}`}
                 >{t.helpTitle}</button>
                 <button type="button" onClick={() => setTab("changelog")}
-                  className={`text-sm font-semibold px-3 py-1 rounded-full transition-all ${tab === "changelog" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                  className={`text-sm font-semibold px-3 py-1 rounded-full transition-all ${tab === "changelog" ? "bg-primary text-primary-foreground" : "text-card-foreground/60 hover:text-card-foreground"}`}
                 >{t.changelog}</button>
               </div>
               <button type="button" onClick={onClose}
-                className="h-7 w-7 grid place-items-center rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                className="h-7 w-7 grid place-items-center rounded-full text-card-foreground/50 hover:text-card-foreground hover:bg-card-foreground/10 transition-colors"
                 aria-label="Close"
               ><X className="h-4 w-4" /></button>
             </div>
@@ -123,22 +123,22 @@ const HelpModal = ({ open, onClose, lang }: { open: boolean; onClose: () => void
               <>
                 <div className="grid grid-cols-1 gap-2">
                   {t.help.map(({ key, desc }) => (
-                    <div key={key} className="flex gap-3 items-start rounded-xl border border-border/50 bg-muted/30 px-4 py-3">
-                      <span className="text-sm font-semibold text-foreground shrink-0 min-w-[90px]">{key}</span>
-                      <span className="text-sm text-muted-foreground">{desc}</span>
+                    <div key={key} className="flex gap-3 items-start rounded-xl border border-border/50 bg-card-foreground/5 px-4 py-3">
+                      <span className="text-sm font-semibold text-card-foreground shrink-0 min-w-[90px]">{key}</span>
+                      <span className="text-sm text-card-foreground/70">{desc}</span>
                     </div>
                   ))}
                 </div>
-                <p className="mt-4 text-xs text-muted-foreground/50 text-center">{t.helpSaved}</p>
+                <p className="mt-4 text-xs text-card-foreground/50 text-center">{t.helpSaved}</p>
               </>
             ) : (
               <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-1">
                 {t.changelogEntries.map((entry) => (
                   <div key={entry.version}>
-                    <h3 className="text-sm font-semibold text-foreground mb-1.5">v{entry.version}</h3>
+                    <h3 className="text-sm font-semibold text-card-foreground mb-1.5">v{entry.version}</h3>
                     <ul className="space-y-1">
                       {entry.changes.map((change, i) => (
-                        <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground rounded-lg border border-border/40 bg-muted/20 px-3 py-2">
+                        <li key={i} className="flex items-start gap-2 text-sm text-card-foreground/70 rounded-lg border border-border/40 bg-card-foreground/5 px-3 py-2">
                           <span className="text-primary mt-0.5 shrink-0">•</span>{change}
                         </li>
                       ))}
@@ -189,22 +189,22 @@ const SettingsPanel = ({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-semibold text-foreground">{t.settingsTitle}</h2>
+              <h2 className="text-lg font-semibold text-card-foreground">{t.settingsTitle}</h2>
               <button type="button" onClick={onClose}
-                className="h-7 w-7 grid place-items-center rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                className="h-7 w-7 grid place-items-center rounded-full text-card-foreground/50 hover:text-card-foreground hover:bg-card-foreground/10 transition-colors"
                 aria-label="Close"
               ><X className="h-4 w-4" /></button>
             </div>
 
             <div className="space-y-5">
               {/* Language */}
-              <div className="rounded-xl border border-border/50 bg-muted/30 px-4 py-3">
-                <label className="text-sm font-semibold text-foreground block mb-2">{t.language}</label>
+              <div className="rounded-xl border border-border/50 bg-card-foreground/5 px-4 py-3">
+                <label className="text-sm font-semibold text-card-foreground block mb-2">{t.language}</label>
                 <div className="flex gap-2">
                   {(["en", "es"] as Lang[]).map((l) => (
                     <button key={l} type="button" onClick={() => onLangChange(l)}
                       className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
-                        lang === l ? "bg-primary text-primary-foreground shadow-sm" : "bg-card text-muted-foreground hover:text-foreground"
+                        lang === l ? "bg-primary text-primary-foreground shadow-sm" : "bg-card-foreground/5 text-card-foreground/60 hover:text-card-foreground hover:bg-card-foreground/10"
                       }`}
                     >{l === "en" ? "English" : "Español"}</button>
                   ))}
@@ -212,13 +212,13 @@ const SettingsPanel = ({
               </div>
 
               {/* Theme */}
-              <div className="rounded-xl border border-border/50 bg-muted/30 px-4 py-3">
-                <label className="text-sm font-semibold text-foreground block mb-2">{t.theme}</label>
+              <div className="rounded-xl border border-border/50 bg-card-foreground/5 px-4 py-3">
+                <label className="text-sm font-semibold text-card-foreground block mb-2">{t.theme}</label>
                 <div className="flex gap-2">
                   {themeOptions.map(({ key, label, Icon }) => (
                     <button key={key} type="button" onClick={() => onThemeChange(key)}
                       className={`flex-1 flex flex-col items-center gap-1.5 rounded-lg px-2 py-2.5 text-xs font-medium transition-all ${
-                        theme === key ? "bg-primary text-primary-foreground shadow-sm" : "bg-card text-muted-foreground hover:text-foreground"
+                        theme === key ? "bg-primary text-primary-foreground shadow-sm" : "bg-card-foreground/5 text-card-foreground/60 hover:text-card-foreground hover:bg-card-foreground/10"
                       }`}
                     >
                       <Icon className="h-4 w-4" />
@@ -229,11 +229,11 @@ const SettingsPanel = ({
               </div>
 
               {/* Full-Color toggle */}
-              <div className="rounded-xl border border-border/50 bg-muted/30 px-4 py-3">
+              <div className="rounded-xl border border-border/50 bg-card-foreground/5 px-4 py-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <label className="text-sm font-semibold text-foreground block">{t.fullColor}</label>
-                    <p className="text-xs text-muted-foreground mt-0.5">{t.fullColorDesc}</p>
+                    <label className="text-sm font-semibold text-card-foreground block">{t.fullColor}</label>
+                    <p className="text-xs text-card-foreground/60 mt-0.5">{t.fullColorDesc}</p>
                   </div>
                   <button
                     type="button"
@@ -241,7 +241,7 @@ const SettingsPanel = ({
                     aria-checked={fullColor}
                     onClick={() => onFullColorChange(!fullColor)}
                     className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors ${
-                      fullColor ? "bg-primary" : "bg-muted-foreground/30"
+                      fullColor ? "bg-primary" : "bg-card-foreground/20"
                     }`}
                   >
                     <span
@@ -413,7 +413,7 @@ export const Whiteboard = () => {
           {statusLabels.map(({ key, label }) => (
             <button key={key} type="button" onClick={() => setStatusFilter(key)}
               className={`rounded-full px-4 py-1.5 text-xs font-medium transition-all ${
-                statusFilter === key ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                statusFilter === key ? "bg-card text-card-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
               }`}
             >{label}</button>
           ))}
