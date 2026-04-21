@@ -1,4 +1,5 @@
 export type Lang = "en" | "es";
+export type Theme = "light" | "mixed" | "dark";
 
 export const translations = {
   en: {
@@ -27,7 +28,25 @@ export const translations = {
     ],
     madeBy: "Made by",
     changelog: "Changelog",
+    // Settings
+    settingsTitle: "Settings",
+    language: "Language",
+    fullColor: "Full-Color",
+    fullColorDesc: "Fill the entire task card with the chosen color.",
+    theme: "Theme",
+    themeLight: "Light",
+    themeMixed: "Mixed",
+    themeDark: "Dark",
     changelogEntries: [
+      {
+        version: "2.1.0",
+        changes: [
+          "Settings panel with gear icon",
+          "Full-Color mode for task cards",
+          "Theme selector: Light / Mixed / Dark",
+          "Language moved into settings",
+        ],
+      },
       {
         version: "2.0.1",
         changes: [
@@ -91,7 +110,25 @@ export const translations = {
     ],
     madeBy: "Hecho por",
     changelog: "Historial de cambios",
+    // Settings
+    settingsTitle: "Ajustes",
+    language: "Idioma",
+    fullColor: "Color completo",
+    fullColorDesc: "Rellena toda la tarjeta de tarea con el color elegido.",
+    theme: "Tema",
+    themeLight: "Claro",
+    themeMixed: "Mixto",
+    themeDark: "Oscuro",
     changelogEntries: [
+      {
+        version: "2.1.0",
+        changes: [
+          "Panel de ajustes con icono de engranaje",
+          "Modo Color completo para tarjetas de tareas",
+          "Selector de tema: Claro / Mixto / Oscuro",
+          "Idioma movido a los ajustes",
+        ],
+      },
       {
         version: "2.0.1",
         changes: [
@@ -131,13 +168,16 @@ export const translations = {
   },
 } as const;
 
+/* ─── Persistence helpers ──────────────────────────────────────────── */
+
 const LANG_KEY = "whiteboard:lang";
+const THEME_KEY = "whiteboard:theme";
+const FULLCOLOR_KEY = "whiteboard:fullcolor";
 
 export const loadLang = (): Lang => {
   try {
     const stored = localStorage.getItem(LANG_KEY);
     if (stored === "en" || stored === "es") return stored;
-    // Auto-detect from browser
     const nav = navigator.language.toLowerCase();
     if (nav.startsWith("es")) return "es";
     return "en";
@@ -145,7 +185,24 @@ export const loadLang = (): Lang => {
     return "en";
   }
 };
+export const saveLang = (lang: Lang) => localStorage.setItem(LANG_KEY, lang);
 
-export const saveLang = (lang: Lang) => {
-  localStorage.setItem(LANG_KEY, lang);
+export const loadTheme = (): Theme => {
+  try {
+    const stored = localStorage.getItem(THEME_KEY);
+    if (stored === "light" || stored === "mixed" || stored === "dark") return stored;
+    return "light";
+  } catch {
+    return "light";
+  }
 };
+export const saveTheme = (theme: Theme) => localStorage.setItem(THEME_KEY, theme);
+
+export const loadFullColor = (): boolean => {
+  try {
+    return localStorage.getItem(FULLCOLOR_KEY) === "true";
+  } catch {
+    return false;
+  }
+};
+export const saveFullColor = (v: boolean) => localStorage.setItem(FULLCOLOR_KEY, String(v));

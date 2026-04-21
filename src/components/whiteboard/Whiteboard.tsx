@@ -16,11 +16,18 @@ import {
   arrayMove,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { Github, X, HelpCircle, Globe } from "lucide-react";
+import { Github, X, HelpCircle, Settings, Sun, Moon, Cloud } from "lucide-react";
 import { TaskCard, Task } from "./TaskCard";
 import { CreateTaskFrame, CreateTaskFrameHandle } from "./CreateTaskFrame";
 import { TaskColor, DEFAULT_HUE } from "@/lib/taskColors";
-import { translations, Lang, loadLang, saveLang } from "@/lib/i18n";
+import {
+  translations,
+  Lang,
+  Theme,
+  loadLang, saveLang,
+  loadTheme, saveTheme,
+  loadFullColor, saveFullColor,
+} from "@/lib/i18n";
 
 const STORAGE_KEY = "whiteboard:tasks:v2";
 const GITHUB_USER = "Ruddisender22";
@@ -28,10 +35,7 @@ const GITHUB_USER = "Ruddisender22";
 type StatusFilter = "all" | "active" | "completed";
 
 const legacyHueMap: Record<string, number> = {
-  blue: 217,
-  green: 142,
-  red: 4,
-  yellow: 45,
+  blue: 217, green: 142, red: 4, yellow: 45,
 };
 
 const loadTasks = (): Task[] => {
@@ -89,97 +93,53 @@ const HelpModal = ({ open, onClose, lang }: { open: boolean; onClose: () => void
       {open && (
         <motion.div
           className="fixed inset-0 z-[100] flex items-center justify-center px-4"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
           transition={{ duration: 0.15 }}
           onClick={onClose}
         >
-          {/* Backdrop */}
           <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
-
-          {/* Panel */}
           <motion.div
             className="relative z-10 w-full max-w-md rounded-2xl border-2 border-border/60 bg-card p-6 shadow-2xl"
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.95, opacity: 0 }}
+            initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
             transition={{ type: "spring", stiffness: 400, damping: 30 }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header */}
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setTab("help")}
-                  className={`text-sm font-semibold px-3 py-1 rounded-full transition-all ${
-                    tab === "help"
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {t.helpTitle}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setTab("changelog")}
-                  className={`text-sm font-semibold px-3 py-1 rounded-full transition-all ${
-                    tab === "changelog"
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {t.changelog}
-                </button>
+                <button type="button" onClick={() => setTab("help")}
+                  className={`text-sm font-semibold px-3 py-1 rounded-full transition-all ${tab === "help" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                >{t.helpTitle}</button>
+                <button type="button" onClick={() => setTab("changelog")}
+                  className={`text-sm font-semibold px-3 py-1 rounded-full transition-all ${tab === "changelog" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                >{t.changelog}</button>
               </div>
-              <button
-                type="button"
-                onClick={onClose}
+              <button type="button" onClick={onClose}
                 className="h-7 w-7 grid place-items-center rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                 aria-label="Close"
-              >
-                <X className="h-4 w-4" />
-              </button>
+              ><X className="h-4 w-4" /></button>
             </div>
 
             {tab === "help" ? (
               <>
-                {/* Controls grid — each in its own card */}
                 <div className="grid grid-cols-1 gap-2">
                   {t.help.map(({ key, desc }) => (
-                    <div
-                      key={key}
-                      className="flex gap-3 items-start rounded-xl border border-border/50 bg-muted/30 px-4 py-3"
-                    >
-                      <span className="text-sm font-semibold text-foreground shrink-0 min-w-[90px]">
-                        {key}
-                      </span>
+                    <div key={key} className="flex gap-3 items-start rounded-xl border border-border/50 bg-muted/30 px-4 py-3">
+                      <span className="text-sm font-semibold text-foreground shrink-0 min-w-[90px]">{key}</span>
                       <span className="text-sm text-muted-foreground">{desc}</span>
                     </div>
                   ))}
                 </div>
-
-                <p className="mt-4 text-xs text-muted-foreground/50 text-center">
-                  {t.helpSaved}
-                </p>
+                <p className="mt-4 text-xs text-muted-foreground/50 text-center">{t.helpSaved}</p>
               </>
             ) : (
-              /* Changelog */
               <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-1">
                 {t.changelogEntries.map((entry) => (
                   <div key={entry.version}>
-                    <h3 className="text-sm font-semibold text-foreground mb-1.5">
-                      v{entry.version}
-                    </h3>
+                    <h3 className="text-sm font-semibold text-foreground mb-1.5">v{entry.version}</h3>
                     <ul className="space-y-1">
                       {entry.changes.map((change, i) => (
-                        <li
-                          key={i}
-                          className="flex items-start gap-2 text-sm text-muted-foreground rounded-lg border border-border/40 bg-muted/20 px-3 py-2"
-                        >
-                          <span className="text-primary mt-0.5 shrink-0">•</span>
-                          {change}
+                        <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground rounded-lg border border-border/40 bg-muted/20 px-3 py-2">
+                          <span className="text-primary mt-0.5 shrink-0">•</span>{change}
                         </li>
                       ))}
                     </ul>
@@ -187,6 +147,112 @@ const HelpModal = ({ open, onClose, lang }: { open: boolean; onClose: () => void
                 ))}
               </div>
             )}
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+};
+
+/* ─── Settings panel ────────────────────────────────────────────────── */
+
+const SettingsPanel = ({
+  open, onClose, lang, onLangChange, theme, onThemeChange, fullColor, onFullColorChange,
+}: {
+  open: boolean; onClose: () => void;
+  lang: Lang; onLangChange: (l: Lang) => void;
+  theme: Theme; onThemeChange: (t: Theme) => void;
+  fullColor: boolean; onFullColorChange: (v: boolean) => void;
+}) => {
+  const t = translations[lang];
+
+  const themeOptions: { key: Theme; label: string; Icon: typeof Sun }[] = [
+    { key: "light", label: t.themeLight, Icon: Sun },
+    { key: "mixed", label: t.themeMixed, Icon: Cloud },
+    { key: "dark", label: t.themeDark, Icon: Moon },
+  ];
+
+  return (
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          className="fixed inset-0 z-[100] flex items-center justify-center px-4"
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          transition={{ duration: 0.15 }}
+          onClick={onClose}
+        >
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
+          <motion.div
+            className="relative z-10 w-full max-w-sm rounded-2xl border-2 border-border/60 bg-card p-6 shadow-2xl"
+            initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-lg font-semibold text-foreground">{t.settingsTitle}</h2>
+              <button type="button" onClick={onClose}
+                className="h-7 w-7 grid place-items-center rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                aria-label="Close"
+              ><X className="h-4 w-4" /></button>
+            </div>
+
+            <div className="space-y-5">
+              {/* Language */}
+              <div className="rounded-xl border border-border/50 bg-muted/30 px-4 py-3">
+                <label className="text-sm font-semibold text-foreground block mb-2">{t.language}</label>
+                <div className="flex gap-2">
+                  {(["en", "es"] as Lang[]).map((l) => (
+                    <button key={l} type="button" onClick={() => onLangChange(l)}
+                      className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
+                        lang === l ? "bg-primary text-primary-foreground shadow-sm" : "bg-card text-muted-foreground hover:text-foreground"
+                      }`}
+                    >{l === "en" ? "English" : "Español"}</button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Theme */}
+              <div className="rounded-xl border border-border/50 bg-muted/30 px-4 py-3">
+                <label className="text-sm font-semibold text-foreground block mb-2">{t.theme}</label>
+                <div className="flex gap-2">
+                  {themeOptions.map(({ key, label, Icon }) => (
+                    <button key={key} type="button" onClick={() => onThemeChange(key)}
+                      className={`flex-1 flex flex-col items-center gap-1.5 rounded-lg px-2 py-2.5 text-xs font-medium transition-all ${
+                        theme === key ? "bg-primary text-primary-foreground shadow-sm" : "bg-card text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      <Icon className="h-4 w-4" />
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Full-Color toggle */}
+              <div className="rounded-xl border border-border/50 bg-muted/30 px-4 py-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="text-sm font-semibold text-foreground block">{t.fullColor}</label>
+                    <p className="text-xs text-muted-foreground mt-0.5">{t.fullColorDesc}</p>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={fullColor}
+                    onClick={() => onFullColorChange(!fullColor)}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors ${
+                      fullColor ? "bg-primary" : "bg-muted-foreground/30"
+                    }`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-md transform transition-transform ${
+                        fullColor ? "translate-x-[22px]" : "translate-x-[2px]"
+                      } mt-[2px]`}
+                    />
+                  </button>
+                </div>
+              </div>
+            </div>
           </motion.div>
         </motion.div>
       )}
@@ -204,17 +270,23 @@ export const Whiteboard = () => {
   const [filterTag, setFilterTag] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [helpOpen, setHelpOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [lang, setLang] = useState<Lang>(() => loadLang());
+  const [theme, setTheme] = useState<Theme>(() => loadTheme());
+  const [fullColor, setFullColor] = useState(() => loadFullColor());
   const boardRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<CreateTaskFrameHandle>(null);
 
   const t = translations[lang];
 
-  const toggleLang = () => {
-    const next: Lang = lang === "en" ? "es" : "en";
-    setLang(next);
-    saveLang(next);
-  };
+  // Apply theme to DOM
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+  }, [theme]);
+
+  const handleLangChange = (l: Lang) => { setLang(l); saveLang(l); };
+  const handleThemeChange = (th: Theme) => { setTheme(th); saveTheme(th); };
+  const handleFullColorChange = (v: boolean) => { setFullColor(v); saveFullColor(v); };
 
   // Sticky create-frame logic
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -264,9 +336,7 @@ export const Whiteboard = () => {
   }, []);
 
   const toggleTask = useCallback((id: string) => {
-    setTasks((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t))
-    );
+    setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)));
   }, []);
 
   const deleteTask = useCallback((id: string) => {
@@ -274,17 +344,13 @@ export const Whiteboard = () => {
   }, []);
 
   const addTag = useCallback((id: string, tag: string) => {
-    setTasks((prev) =>
-      prev.map((t) =>
-        t.id === id && !t.tags.includes(tag) ? { ...t, tags: [...t.tags, tag] } : t
-      )
-    );
+    setTasks((prev) => prev.map((t) =>
+      t.id === id && !t.tags.includes(tag) ? { ...t, tags: [...t.tags, tag] } : t
+    ));
   }, []);
 
   const removeTag = useCallback((id: string, tag: string) => {
-    setTasks((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, tags: t.tags.filter((x) => x !== tag) } : t))
-    );
+    setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, tags: t.tags.filter((x) => x !== tag) } : t)));
   }, []);
 
   const changeColor = useCallback((id: string, color: TaskColor) => {
@@ -338,31 +404,18 @@ export const Whiteboard = () => {
     >
       <div className="mx-auto w-full max-w-2xl">
         <header className="mb-10 text-center">
-          <h1 className="text-4xl font-semibold tracking-tight text-foreground">
-            {t.title}
-          </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {t.subtitle}
-          </p>
+          <h1 className="text-4xl font-semibold tracking-tight text-foreground">{t.title}</h1>
+          <p className="mt-2 text-sm text-muted-foreground">{t.subtitle}</p>
         </header>
 
         {/* Status filter tabs */}
         <div className="mb-4 flex items-center justify-center gap-1 rounded-full bg-muted p-1 w-fit mx-auto">
           {statusLabels.map(({ key, label }) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setStatusFilter(key)}
-              className={`
-                rounded-full px-4 py-1.5 text-xs font-medium transition-all
-                ${statusFilter === key
-                  ? "bg-card text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-                }
-              `}
-            >
-              {label}
-            </button>
+            <button key={key} type="button" onClick={() => setStatusFilter(key)}
+              className={`rounded-full px-4 py-1.5 text-xs font-medium transition-all ${
+                statusFilter === key ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >{label}</button>
           ))}
         </div>
 
@@ -371,144 +424,87 @@ export const Whiteboard = () => {
           <div className="mb-6 flex items-center gap-2 flex-wrap justify-center">
             <span className="text-xs text-muted-foreground/60 mr-1">{t.tags}</span>
             {allTags.map((tag) => (
-              <button
-                key={tag}
-                type="button"
+              <button key={tag} type="button"
                 onClick={() => setFilterTag(filterTag === tag ? null : tag)}
-                className={`
-                  inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium transition-all
-                  ${filterTag === tag
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "bg-muted text-muted-foreground hover:bg-muted/80"
-                  }
-                `}
+                className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium transition-all ${
+                  filterTag === tag ? "bg-primary text-primary-foreground shadow-sm" : "bg-muted text-muted-foreground hover:bg-muted/80"
+                }`}
               >
                 {tag}
                 {filterTag === tag && <X className="h-3 w-3" />}
               </button>
             ))}
             {filterTag && (
-              <button
-                type="button"
-                onClick={() => setFilterTag(null)}
+              <button type="button" onClick={() => setFilterTag(null)}
                 className="text-xs text-muted-foreground/60 hover:text-muted-foreground underline ml-1 transition-colors"
-              >
-                {t.clear}
-              </button>
+              >{t.clear}</button>
             )}
           </div>
         )}
 
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-          onDragCancel={() => setActiveId(null)}
+        <DndContext sensors={sensors} collisionDetection={closestCenter}
+          onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragCancel={() => setActiveId(null)}
         >
-          <SortableContext
-            items={displayedTasks.map((t) => t.id)}
-            strategy={verticalListSortingStrategy}
-          >
+          <SortableContext items={displayedTasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
             <div className="flex flex-col gap-3">
               <AnimatePresence initial={false} mode="popLayout">
                 {displayedTasks.map((task) => (
-                  <TaskCard
-                    key={task.id}
-                    task={task}
-                    onToggle={toggleTask}
-                    onDelete={deleteTask}
-                    onRename={renameTask}
-                    onAddTag={addTag}
-                    onRemoveTag={removeTag}
-                    onChangeColor={changeColor}
-                    exitSlideRight={shouldSlideRight}
+                  <TaskCard key={task.id} task={task}
+                    onToggle={toggleTask} onDelete={deleteTask} onRename={renameTask}
+                    onAddTag={addTag} onRemoveTag={removeTag} onChangeColor={changeColor}
+                    exitSlideRight={shouldSlideRight} fullColor={fullColor}
                   />
                 ))}
               </AnimatePresence>
 
-              {/* In-flow create frame */}
               {!frameSticky && (
-                <CreateTaskFrame
-                  ref={frameRef}
-                  visible={showCreateFrame}
-                  active={creating}
-                  onActivate={() => setCreating(true)}
-                  onSubmit={addTask}
-                  onCancel={() => setCreating(false)}
+                <CreateTaskFrame ref={frameRef} visible={showCreateFrame} active={creating}
+                  onActivate={() => setCreating(true)} onSubmit={addTask} onCancel={() => setCreating(false)}
                 />
               )}
-
               <div ref={sentinelRef} className="h-0 w-full" aria-hidden />
             </div>
           </SortableContext>
           <DragOverlay dropAnimation={{ duration: 200, easing: "cubic-bezier(0.18, 0.67, 0.6, 1.22)" }}>
-            {activeId
-              ? (() => {
-                  const t = tasks.find((x) => x.id === activeId);
-                  if (!t) return null;
-                  return (
-                    <TaskCard
-                      task={t}
-                      onToggle={() => {}}
-                      onDelete={() => {}}
-                      onRename={() => {}}
-                      onAddTag={() => {}}
-                      onRemoveTag={() => {}}
-                      onChangeColor={() => {}}
-                      overlay
-                    />
-                  );
-                })()
-              : null}
+            {activeId ? (() => {
+              const t = tasks.find((x) => x.id === activeId);
+              if (!t) return null;
+              return <TaskCard task={t} onToggle={() => {}} onDelete={() => {}} onRename={() => {}}
+                onAddTag={() => {}} onRemoveTag={() => {}} onChangeColor={() => {}} overlay fullColor={fullColor} />;
+            })() : null}
           </DragOverlay>
         </DndContext>
       </div>
-
     </main>
 
     {/* Sticky create frame */}
     {frameSticky && showCreateFrame && (
       <div className="fixed bottom-16 left-1/2 -translate-x-1/2 z-40 w-full max-w-2xl px-4">
-        <CreateTaskFrame
-          ref={frameRef}
-          visible
-          active={creating}
-          onActivate={() => setCreating(true)}
-          onSubmit={addTask}
-          onCancel={() => setCreating(false)}
+        <CreateTaskFrame ref={frameRef} visible active={creating}
+          onActivate={() => setCreating(true)} onSubmit={addTask} onCancel={() => setCreating(false)}
         />
       </div>
     )}
 
-    {/* Bottom-left buttons: Help + Language */}
+    {/* Bottom-left buttons: Help + Settings */}
     <div className="fixed bottom-4 left-4 z-50 flex items-center gap-2">
-      <button
-        type="button"
-        aria-label="Help"
-        onClick={() => setHelpOpen(true)}
+      <button type="button" aria-label="Help" onClick={() => setHelpOpen(true)}
         className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-card/80 backdrop-blur border border-border text-muted-foreground/70 hover:text-foreground hover:bg-card transition-colors"
-      >
-        <HelpCircle className="h-4 w-4" />
-      </button>
-      <button
-        type="button"
-        aria-label="Toggle language"
-        onClick={toggleLang}
-        className="inline-flex items-center justify-center gap-1 h-8 rounded-full bg-card/80 backdrop-blur px-2.5 border border-border text-muted-foreground/70 hover:text-foreground hover:bg-card transition-colors"
-      >
-        <Globe className="h-3.5 w-3.5" />
-        <span className="text-[10px] font-semibold uppercase">{lang === "en" ? "ES" : "EN"}</span>
-      </button>
+      ><HelpCircle className="h-4 w-4" /></button>
+      <button type="button" aria-label="Settings" onClick={() => setSettingsOpen(true)}
+        className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-card/80 backdrop-blur border border-border text-muted-foreground/70 hover:text-foreground hover:bg-card transition-colors"
+      ><Settings className="h-4 w-4" /></button>
     </div>
 
     <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} lang={lang} />
+    <SettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)}
+      lang={lang} onLangChange={handleLangChange}
+      theme={theme} onThemeChange={handleThemeChange}
+      fullColor={fullColor} onFullColorChange={handleFullColorChange}
+    />
 
     <footer className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 text-xs text-muted-foreground/70 pointer-events-none">
-      <a
-        href={`https://github.com/${GITHUB_USER}`}
-        target="_blank"
-        rel="noopener noreferrer"
+      <a href={`https://github.com/${GITHUB_USER}`} target="_blank" rel="noopener noreferrer"
         className="inline-flex items-center gap-1.5 rounded-full bg-card/80 backdrop-blur px-3 py-1.5 border border-border hover:text-foreground hover:bg-card transition-colors pointer-events-auto"
         onClick={(e) => e.stopPropagation()}
       >

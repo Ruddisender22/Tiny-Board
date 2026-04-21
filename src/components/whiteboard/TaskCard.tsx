@@ -4,7 +4,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useState, useRef, useEffect, KeyboardEvent } from "react";
 import { cn } from "@/lib/utils";
-import { colorVar, TaskColor } from "@/lib/taskColors";
+import { colorVar, colorVarSoft, TaskColor } from "@/lib/taskColors";
 import { HueSlider } from "./HueSlider";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
@@ -27,6 +27,8 @@ interface TaskCardProps {
   overlay?: boolean;
   /** When true the exit animation slides right instead of fading in-place */
   exitSlideRight?: boolean;
+  /** When true the card background is fully colored */
+  fullColor?: boolean;
 }
 
 export const TaskCard = ({
@@ -39,6 +41,7 @@ export const TaskCard = ({
   onChangeColor,
   overlay = false,
   exitSlideRight = false,
+  fullColor = false,
 }: TaskCardProps) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: task.id, disabled: overlay });
@@ -109,7 +112,6 @@ export const TaskCard = ({
   return (
     <motion.div
       ref={setNodeRef}
-      style={style}
       layout
       initial={{ opacity: 0, y: -8, scale: 0.98 }}
       animate={{
@@ -124,21 +126,33 @@ export const TaskCard = ({
       }
       transition={{ type: "spring", stiffness: 380, damping: 30 }}
       className={cn(
-        "group relative flex items-center gap-3 rounded-2xl border border-border bg-card task-shadow",
+        "group relative flex items-center gap-3 rounded-2xl border task-shadow",
         "px-5 py-4 cursor-default select-none transition-shadow hover:task-shadow-hover",
+        fullColor ? "border-transparent" : "border-border bg-card",
         overlay && "task-shadow-hover ring-2 ring-primary/20 cursor-grabbing rotate-1"
       )}
+      {...(fullColor
+        ? {
+            style: {
+              ...style,
+              backgroundColor: colorVarSoft(task.color, 0.18),
+              borderColor: colorVarSoft(task.color, 0.25),
+            },
+          }
+        : { style })}
       onContextMenu={(e) => {
         e.preventDefault();
         onToggle(task.id);
       }}
     >
-      {/* Color accent bar */}
-      <span
-        aria-hidden
-        className="absolute left-0 top-3 bottom-3 w-1 rounded-full"
-        style={{ backgroundColor: colorVar(task.color) }}
-      />
+      {/* Color accent bar (hidden in full-color mode) */}
+      {!fullColor && (
+        <span
+          aria-hidden
+          className="absolute left-0 top-3 bottom-3 w-1 rounded-full"
+          style={{ backgroundColor: colorVar(task.color) }}
+        />
+      )}
 
       {/* Drag handle */}
       <button
