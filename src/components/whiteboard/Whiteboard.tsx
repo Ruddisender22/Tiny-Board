@@ -452,7 +452,7 @@ export const Whiteboard = () => {
                   <TaskCard key={task.id} task={task}
                     onToggle={toggleTask} onDelete={deleteTask} onRename={renameTask}
                     onAddTag={addTag} onRemoveTag={removeTag} onChangeColor={changeColor}
-                    exitSlideRight={shouldSlideRight} fullColor={fullColor}
+                    exitSlideRight={shouldSlideRight} fullColor={fullColor} lang={lang}
                   />
                 ))}
               </AnimatePresence>
@@ -460,6 +460,7 @@ export const Whiteboard = () => {
               {!frameSticky && (
                 <CreateTaskFrame ref={frameRef} visible={showCreateFrame} active={creating}
                   onActivate={() => setCreating(true)} onSubmit={addTask} onCancel={() => setCreating(false)}
+                  lang={lang}
                 />
               )}
               <div ref={sentinelRef} className="h-0 w-full" aria-hidden />
@@ -470,7 +471,7 @@ export const Whiteboard = () => {
               const t = tasks.find((x) => x.id === activeId);
               if (!t) return null;
               return <TaskCard task={t} onToggle={() => {}} onDelete={() => {}} onRename={() => {}}
-                onAddTag={() => {}} onRemoveTag={() => {}} onChangeColor={() => {}} overlay fullColor={fullColor} />;
+                onAddTag={() => {}} onRemoveTag={() => {}} onChangeColor={() => {}} overlay fullColor={fullColor} lang={lang} />;
             })() : null}
           </DragOverlay>
         </DndContext>
@@ -482,6 +483,7 @@ export const Whiteboard = () => {
       <div className="fixed bottom-16 left-1/2 -translate-x-1/2 z-40 w-full max-w-2xl px-4">
         <CreateTaskFrame ref={frameRef} visible active={creating}
           onActivate={() => setCreating(true)} onSubmit={addTask} onCancel={() => setCreating(false)}
+          lang={lang}
         />
       </div>
     )}

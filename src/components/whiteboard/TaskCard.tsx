@@ -5,6 +5,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { useState, useRef, useEffect, KeyboardEvent } from "react";
 import { cn } from "@/lib/utils";
 import { colorVar, colorVarSoft, TaskColor } from "@/lib/taskColors";
+import { Lang, translations } from "@/lib/i18n";
 import { HueSlider } from "./HueSlider";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
@@ -29,6 +30,7 @@ interface TaskCardProps {
   exitSlideRight?: boolean;
   /** When true the card background is fully colored */
   fullColor?: boolean;
+  lang: Lang;
 }
 
 export const TaskCard = ({
@@ -42,7 +44,9 @@ export const TaskCard = ({
   overlay = false,
   exitSlideRight = false,
   fullColor = false,
+  lang,
 }: TaskCardProps) => {
+  const t = translations[lang];
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: task.id, disabled: overlay });
 
@@ -249,7 +253,7 @@ export const TaskCard = ({
             onKeyDown={handleTagKey}
             onBlur={commitTag}
             onClick={(e) => e.stopPropagation()}
-            placeholder="tag"
+            placeholder={t.tag}
             className="w-16 bg-transparent text-xs text-card-foreground outline-none border-b border-dashed border-card-foreground/40 placeholder:text-card-foreground/40"
           />
         ) : (
@@ -263,7 +267,7 @@ export const TaskCard = ({
             className="inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-xs text-card-foreground/60 hover:bg-card-foreground/10 hover:text-card-foreground opacity-0 group-hover:opacity-100 transition-opacity"
           >
             <Plus className="h-3 w-3" />
-            tag
+            {t.tag}
           </button>
         )}
       </div>

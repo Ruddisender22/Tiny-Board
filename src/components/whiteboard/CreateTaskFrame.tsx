@@ -3,6 +3,7 @@ import { forwardRef, useEffect, useImperativeHandle, useRef, useState, KeyboardE
 import { Plus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TaskColor, DEFAULT_HUE, colorVar } from "@/lib/taskColors";
+import { Lang, translations } from "@/lib/i18n";
 import { HueSlider } from "./HueSlider";
 
 interface CreateTaskFrameProps {
@@ -11,6 +12,7 @@ interface CreateTaskFrameProps {
   onActivate: () => void;
   onSubmit: (name: string, color: TaskColor, tags: string[]) => void;
   onCancel: () => void;
+  lang: Lang;
 }
 
 export interface CreateTaskFrameHandle {
@@ -18,7 +20,8 @@ export interface CreateTaskFrameHandle {
 }
 
 export const CreateTaskFrame = forwardRef<CreateTaskFrameHandle, CreateTaskFrameProps>(
-  ({ visible, active, onActivate, onSubmit, onCancel }, ref) => {
+  ({ visible, active, onActivate, onSubmit, onCancel, lang }, ref) => {
+    const t = translations[lang];
     const [name, setName] = useState("");
     const [color, setColor] = useState<TaskColor>(DEFAULT_HUE);
     const [tags, setTags] = useState<string[]>([]);
@@ -96,7 +99,7 @@ export const CreateTaskFrame = forwardRef<CreateTaskFrameHandle, CreateTaskFrame
                   onCancel();
                 }
               }}
-              placeholder="What needs to be done?"
+              placeholder={t.whatNeedsDone}
               className="flex-1 min-w-[140px] bg-transparent text-base font-medium text-card-foreground placeholder:text-card-foreground/60 outline-none"
             />
             {tags.map((tag) => (
@@ -123,11 +126,11 @@ export const CreateTaskFrame = forwardRef<CreateTaskFrameHandle, CreateTaskFrame
               onChange={(e) => setTagDraft(e.target.value)}
               onKeyDown={handleTagKey}
               onBlur={() => tagDraft.trim() && commitTag()}
-              placeholder="+ tag"
+              placeholder={`+ ${t.tag}`}
               className="w-20 bg-transparent text-xs text-card-foreground/70 placeholder:text-card-foreground/50 outline-none border-b border-dashed border-card-foreground/20 focus:border-card-foreground/40"
             />
             <div className="ml-auto flex items-center gap-2">
-              <span className="text-xs text-card-foreground/60">Color</span>
+              <span className="text-xs text-card-foreground/60">{t.color}</span>
               <HueSlider hue={color} onChange={setColor} />
             </div>
           </div>
@@ -157,7 +160,7 @@ export const CreateTaskFrame = forwardRef<CreateTaskFrameHandle, CreateTaskFrame
             )}
           >
             <Plus className="h-4 w-4" />
-            <span className="text-base font-medium">Create task</span>
+            <span className="text-base font-medium">{t.createTask}</span>
           </motion.button>
         )}
       </AnimatePresence>
