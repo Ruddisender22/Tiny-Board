@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { version } from "../../../package.json";
-import { AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   DndContext,
   PointerSensor,
@@ -16,13 +16,15 @@ import {
   arrayMove,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { Github, X } from "lucide-react";
+import { Github, X, HelpCircle } from "lucide-react";
 import { TaskCard, Task } from "./TaskCard";
 import { CreateTaskFrame, CreateTaskFrameHandle } from "./CreateTaskFrame";
 import { TaskColor, DEFAULT_HUE } from "@/lib/taskColors";
 
 const STORAGE_KEY = "whiteboard:tasks:v2";
 const GITHUB_USER = "Ruddisender22";
+
+type StatusFilter = "all" | "active" | "completed";
 
 const legacyHueMap: Record<string, number> = {
   blue: 217,
@@ -33,7 +35,6 @@ const legacyHueMap: Record<string, number> = {
 
 const loadTasks = (): Task[] => {
   try {
-    // Try v2 first
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
@@ -49,7 +50,6 @@ const loadTasks = (): Task[] => {
           }));
       }
     }
-    // Migrate from v1
     const v1 = localStorage.getItem("whiteboard:tasks:v1");
     if (v1) {
       const parsed = JSON.parse(v1);
@@ -78,14 +78,114 @@ const sortWithCompletedLast = (tasks: Task[]): Task[] => {
   return [...active, ...done];
 };
 
+/* ─── Help modal ────────────────────────────────────────────────────── */
+
+const HelpModal = ({ open, onClose }: { open: boolean; onClose: () => void }) => (
+  <AnimatePresence>
+    {open && (
+      <motion.div
+        className="fixed inset-0 z-[100] flex items-center justify-center px-4"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.15 }}
+        onClick={onClose}
+      >
+        {/* Backdrop */}
+        <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
+
+        {/* Panel */}
+        <motion.div
+          className="relative z-10 w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl"
+          initial={{ scale: 0.95, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.95, opacity: 0 }}
+          transition={{ type: "spring", stiffness: 400, damping: 30 }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-foreground">Controls & Features</h2>
+            <button
+              type="button"
+              onClick={onClose}
+              className="h-7 w-7 grid place-items-center rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              aria-label="Close help"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          <ul className="space-y-2.5 text-sm text-muted-foreground">
+            <li className="flex gap-2">
+              <span className="text-foreground font-medium shrink-0">Hover</span>
+              <span>— over the board to reveal the create-task button.</span>
+            </li>
+            <li className="flex gap-2">
+              <span className="text-foreground font-medium shrink-0">Double-click</span>
+              <span>— a task name to rename it inline.</span>
+            </li>
+            <li className="flex gap-2">
+              <span className="text-foreground font-medium shrink-0">Right-click</span>
+              <span>— a task to toggle complete / not complete.</span>
+            </li>
+            <li className="flex gap-2">
+              <span className="text-foreground font-medium shrink-0">Drag</span>
+              <span>— the ⠿ handle to reorder tasks.</span>
+            </li>
+            <li className="flex gap-2">
+              <span className="text-foreground font-medium shrink-0">Color dot</span>
+              <span>— click the dot to change the task color.</span>
+            </li>
+            <li className="flex gap-2">
+              <span className="text-foreground font-medium shrink-0">Tags</span>
+              <span>— click "+ tag" to add tags, then use the filter bar.</span>
+            </li>
+            <li className="flex gap-2">
+              <span className="text-foreground font-medium shrink-0">Status bar</span>
+              <span>— switch between All / Active / Completed views.</span>
+            </li>
+            <li className="flex gap-2">
+              <span className="text-foreground font-medium shrink-0">✕ button</span>
+              <span>— delete a task (appears on hover).</span>
+            </li>
+          </ul>
+
+          <p className="mt-4 text-xs text-muted-foreground/50 text-center">
+            All tasks are saved automatically in your browser.
+          </p>
+        </motion.div>
+      </motion.div>
+    )}
+  </AnimatePresence>
+);
+
+/* ─── Main whiteboard ───────────────────────────────────────────────── */
+
 export const Whiteboard = () => {
   const [tasks, setTasks] = useState<Task[]>(() => loadTasks());
   const [hovered, setHovered] = useState(false);
   const [creating, setCreating] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [filterTag, setFilterTag] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [helpOpen, setHelpOpen] = useState(false);
   const boardRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<CreateTaskFrameHandle>(null);
+
+  // Sticky create-frame logic
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const [frameSticky, setFrameSticky] = useState(false);
+
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setFrameSticky(!entry.isIntersecting),
+      { threshold: 0 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
@@ -104,10 +204,15 @@ export const Whiteboard = () => {
 
   // Sorted and filtered task list
   const displayedTasks = useMemo(() => {
-    const sorted = sortWithCompletedLast(tasks);
-    if (!filterTag) return sorted;
-    return sorted.filter((t) => t.tags.includes(filterTag));
-  }, [tasks, filterTag]);
+    let list = sortWithCompletedLast(tasks);
+    if (statusFilter === "active") list = list.filter((t) => !t.completed);
+    else if (statusFilter === "completed") list = list.filter((t) => t.completed);
+    if (filterTag) list = list.filter((t) => t.tags.includes(filterTag));
+    return list;
+  }, [tasks, filterTag, statusFilter]);
+
+  // Whether toggling a task in the current filter should trigger slide-right exit
+  const shouldSlideRight = statusFilter !== "all";
 
   const addTask = useCallback((name: string, color: TaskColor, tags: string[]) => {
     setTasks((prev) => [
@@ -173,6 +278,14 @@ export const Whiteboard = () => {
     frameRef.current?.submit();
   };
 
+  const statusLabels: { key: StatusFilter; label: string }[] = [
+    { key: "all", label: "All" },
+    { key: "active", label: "Active" },
+    { key: "completed", label: "Completed" },
+  ];
+
+  const showCreateFrame = hovered || creating;
+
   return (
     <>
     <main
@@ -180,7 +293,7 @@ export const Whiteboard = () => {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onClick={handleBoardClick}
-      className="relative min-h-screen w-full bg-background bg-dot-pattern px-4 py-12 sm:py-20"
+      className="relative min-h-screen w-full bg-background bg-dot-pattern px-4 py-12 sm:py-20 pb-32"
     >
       <div className="mx-auto w-full max-w-2xl">
         <header className="mb-10 text-center">
@@ -192,10 +305,30 @@ export const Whiteboard = () => {
           </p>
         </header>
 
+        {/* Status filter tabs */}
+        <div className="mb-4 flex items-center justify-center gap-1 rounded-full bg-muted p-1 w-fit mx-auto">
+          {statusLabels.map(({ key, label }) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setStatusFilter(key)}
+              className={`
+                rounded-full px-4 py-1.5 text-xs font-medium transition-all
+                ${statusFilter === key
+                  ? "bg-card text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+                }
+              `}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
         {/* Tag filter bar */}
         {allTags.length > 0 && (
           <div className="mb-6 flex items-center gap-2 flex-wrap justify-center">
-            <span className="text-xs text-muted-foreground/60 mr-1">Filter:</span>
+            <span className="text-xs text-muted-foreground/60 mr-1">Tags:</span>
             {allTags.map((tag) => (
               <button
                 key={tag}
@@ -237,7 +370,7 @@ export const Whiteboard = () => {
             strategy={verticalListSortingStrategy}
           >
             <div className="flex flex-col gap-3">
-              <AnimatePresence initial={false}>
+              <AnimatePresence initial={false} mode="popLayout">
                 {displayedTasks.map((task) => (
                   <TaskCard
                     key={task.id}
@@ -248,18 +381,25 @@ export const Whiteboard = () => {
                     onAddTag={addTag}
                     onRemoveTag={removeTag}
                     onChangeColor={changeColor}
+                    exitSlideRight={shouldSlideRight}
                   />
                 ))}
               </AnimatePresence>
 
-              <CreateTaskFrame
-                ref={frameRef}
-                visible={hovered || creating}
-                active={creating}
-                onActivate={() => setCreating(true)}
-                onSubmit={addTask}
-                onCancel={() => setCreating(false)}
-              />
+              {/* In-flow create frame (when visible at the bottom of the list) */}
+              {!frameSticky && (
+                <CreateTaskFrame
+                  ref={frameRef}
+                  visible={showCreateFrame}
+                  active={creating}
+                  onActivate={() => setCreating(true)}
+                  onSubmit={addTask}
+                  onCancel={() => setCreating(false)}
+                />
+              )}
+
+              {/* Sentinel: when this scrolls out of view, the frame goes sticky */}
+              <div ref={sentinelRef} className="h-0 w-full" aria-hidden />
             </div>
           </SortableContext>
           <DragOverlay dropAnimation={{ duration: 200, easing: "cubic-bezier(0.18, 0.67, 0.6, 1.22)" }}>
@@ -286,6 +426,32 @@ export const Whiteboard = () => {
       </div>
 
     </main>
+
+    {/* Sticky create frame — fixed at viewport bottom when scrolled past the in-flow position */}
+    {frameSticky && showCreateFrame && (
+      <div className="fixed bottom-16 left-1/2 -translate-x-1/2 z-40 w-full max-w-2xl px-4">
+        <CreateTaskFrame
+          ref={frameRef}
+          visible
+          active={creating}
+          onActivate={() => setCreating(true)}
+          onSubmit={addTask}
+          onCancel={() => setCreating(false)}
+        />
+      </div>
+    )}
+
+    {/* Help button */}
+    <button
+      type="button"
+      aria-label="Help"
+      onClick={() => setHelpOpen(true)}
+      className="fixed bottom-4 left-4 z-50 inline-flex items-center justify-center h-8 w-8 rounded-full bg-card/80 backdrop-blur border border-border text-muted-foreground/70 hover:text-foreground hover:bg-card transition-colors"
+    >
+      <HelpCircle className="h-4 w-4" />
+    </button>
+
+    <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} />
 
     <footer className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 text-xs text-muted-foreground/70 pointer-events-none">
       <a

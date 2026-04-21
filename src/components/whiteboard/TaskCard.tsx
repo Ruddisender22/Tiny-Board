@@ -25,6 +25,8 @@ interface TaskCardProps {
   onRemoveTag: (id: string, tag: string) => void;
   onChangeColor: (id: string, color: TaskColor) => void;
   overlay?: boolean;
+  /** When true the exit animation slides right instead of fading in-place */
+  exitSlideRight?: boolean;
 }
 
 export const TaskCard = ({
@@ -36,6 +38,7 @@ export const TaskCard = ({
   onRemoveTag,
   onChangeColor,
   overlay = false,
+  exitSlideRight = false,
 }: TaskCardProps) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: task.id, disabled: overlay });
@@ -114,7 +117,11 @@ export const TaskCard = ({
         y: 0,
         scale: 1,
       }}
-      exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.15 } }}
+      exit={
+        exitSlideRight
+          ? { opacity: 0, x: 300, transition: { duration: 0.3, ease: "easeIn" } }
+          : { opacity: 0, scale: 0.95, transition: { duration: 0.15 } }
+      }
       transition={{ type: "spring", stiffness: 380, damping: 30 }}
       className={cn(
         "group relative flex items-center gap-3 rounded-2xl border border-border bg-card task-shadow",
