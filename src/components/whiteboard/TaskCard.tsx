@@ -118,10 +118,13 @@ export const TaskCard = ({
       transition={{ type: "spring", stiffness: 380, damping: 30 }}
       className={cn(
         "group relative flex items-center gap-3 rounded-2xl border border-border bg-card task-shadow",
-        "px-5 py-4 cursor-pointer select-none transition-shadow hover:task-shadow-hover",
+        "px-5 py-4 cursor-default select-none transition-shadow hover:task-shadow-hover",
         overlay && "task-shadow-hover ring-2 ring-primary/20 cursor-grabbing rotate-1"
       )}
-      onClick={() => onToggle(task.id)}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        onToggle(task.id);
+      }}
     >
       {/* Color accent bar */}
       <span
