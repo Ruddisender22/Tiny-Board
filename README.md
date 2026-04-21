@@ -17,6 +17,15 @@ A minimal task board that lives in your browser. No accounts, no servers — jus
 
 Everything saves to your browser automatically.
 
+## Releases
+
+- **v1.0.5 (Current Release)**: 
+  - Complete mobile adaptation with touch support (double tap to complete, single tap to edit, hold to move).
+  - Global `Enter` shortcut to instantly open the task creator.
+  - Fixes for sticky frame visibility and mobile keyboard behavior.
+  - Three visual themes (Light, Mixed, Dark) with optional Full-Color cards.
+  - English and Spanish localization.
+
 ## Run locally
 
 ```bash
