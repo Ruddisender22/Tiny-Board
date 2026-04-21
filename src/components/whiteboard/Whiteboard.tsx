@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
+import { version } from "../../../package.json";
 import { AnimatePresence } from "framer-motion";
 import {
   DndContext,
@@ -243,6 +244,10 @@ export const Whiteboard = () => {
         Made by @{GITHUB_USER}
       </a>
     </footer>
+
+    <span className="fixed bottom-4 right-4 z-50 text-[10px] text-muted-foreground/40 select-none">
+      v{version}
+    </span>
     </>
   );
 };
