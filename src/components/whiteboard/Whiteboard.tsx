@@ -291,24 +291,6 @@ export const Whiteboard = () => {
   const handleThemeChange = (th: Theme) => { setTheme(th); saveTheme(th); };
   const handleFullColorChange = (v: boolean) => { setFullColor(v); saveFullColor(v); };
 
-  // Detect when the sticky create-frame is floating
-  const sentinelRef = useRef<HTMLDivElement>(null);
-  const [isStuck, setIsStuck] = useState(false);
-
-  useEffect(() => {
-    const el = sentinelRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        // If the sentinel (placed right above the sticky element) is not intersecting,
-        // it means we haven't scrolled down far enough, so the element is "stuck" at the bottom.
-        setIsStuck(!entry.isIntersecting);
-      },
-      { threshold: 0 }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [displayedTasks.length]);
 
 
   // Global Enter shortcut
@@ -350,6 +332,23 @@ export const Whiteboard = () => {
   }, [tasks, filterTag, statusFilter]);
 
   const shouldSlideRight = statusFilter !== "all";
+
+  // Detect when the sticky create-frame is floating (must come after displayedTasks)
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const [isStuck, setIsStuck] = useState(false);
+
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsStuck(!entry.isIntersecting),
+      { threshold: 0, rootMargin: "0px 0px -80px 0px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  // Re-connect when task count changes so observer updates
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [displayedTasks.length]);
 
 
   const addTask = useCallback((name: string, color: TaskColor, tags: string[]) => {

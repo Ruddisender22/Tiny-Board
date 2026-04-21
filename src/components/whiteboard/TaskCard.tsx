@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { X, GripVertical, Plus } from "lucide-react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { useState, useRef, useEffect, KeyboardEvent } from "react";
+import { useState, useRef, useEffect, useCallback, KeyboardEvent } from "react";
 import { cn, useIsTouchDevice } from "@/lib/utils";
 import { colorVar, colorVarSoft, TaskColor } from "@/lib/taskColors";
 import { Lang, translations } from "@/lib/i18n";
@@ -33,6 +33,8 @@ interface TaskCardProps {
   lang: Lang;
 }
 
+const DOUBLE_TAP_MS = 300;
+
 export const TaskCard = ({
   task,
   onToggle,
@@ -57,6 +59,10 @@ export const TaskCard = ({
   const [nameDraft, setNameDraft] = useState(task.name);
   const nameInputRef = useRef<HTMLInputElement>(null);
 
+  // Double-tap detection for mobile complete
+  const lastTapRef = useRef<number>(0);
+  const tapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Keep draft in sync if the task name changes externally
   useEffect(() => {
     if (!editing) setNameDraft(task.name);
@@ -69,6 +75,13 @@ export const TaskCard = ({
       nameInputRef.current.select();
     }
   }, [editing]);
+
+  // Cleanup tap timer on unmount
+  useEffect(() => {
+    return () => {
+      if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
+    };
+  }, []);
 
   const commitName = () => {
     const trimmed = nameDraft.trim();
@@ -98,8 +111,8 @@ export const TaskCard = ({
       };
 
   const commitTag = () => {
-    const t = tagDraft.trim().replace(/^#/, "");
-    if (t && !task.tags.includes(t)) onAddTag(task.id, t);
+    const val = tagDraft.trim().replace(/^#/, "");
+    if (val && !task.tags.includes(val)) onAddTag(task.id, val);
     setTagDraft("");
     setAdding(false);
   };
@@ -113,6 +126,37 @@ export const TaskCard = ({
       setAdding(false);
     }
   };
+
+  /**
+   * Touch tap handler:
+   * - Single tap → open inline edit
+   * - Double tap → toggle complete
+   */
+  const handleTouchTap = useCallback(
+    (e: React.MouseEvent) => {
+      if (!isTouch || overlay) return;
+      e.stopPropagation();
+
+      const now = Date.now();
+      const delta = now - lastTapRef.current;
+      lastTapRef.current = now;
+
+      if (delta < DOUBLE_TAP_MS && tapTimerRef.current) {
+        // Double-tap
+        clearTimeout(tapTimerRef.current);
+        tapTimerRef.current = null;
+        onToggle(task.id);
+      } else {
+        // Single-tap — delay to wait for possible second tap
+        if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
+        tapTimerRef.current = setTimeout(() => {
+          tapTimerRef.current = null;
+          if (!overlay) setEditing(true);
+        }, DOUBLE_TAP_MS);
+      }
+    },
+    [isTouch, overlay, onToggle, task.id]
+  );
 
   return (
     <motion.div
@@ -147,8 +191,9 @@ export const TaskCard = ({
         : { style })}
       onContextMenu={(e) => {
         e.preventDefault();
-        onToggle(task.id);
+        if (!isTouch) onToggle(task.id);
       }}
+      onClick={isTouch ? handleTouchTap : undefined}
     >
       {/* Color accent bar (hidden in full-color mode) */}
       {!fullColor && (
@@ -165,8 +210,8 @@ export const TaskCard = ({
         aria-label="Drag to reorder"
         onClick={(e) => e.stopPropagation()}
         className={cn(
-          "ml-1 -mr-1 cursor-grab active:cursor-grabbing text-card-foreground/40 hover:text-card-foreground/70 transition-colors",
-          isTouch ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+          "ml-1 -mr-1 cursor-grab active:cursor-grabbing text-card-foreground/40 hover:text-card-foreground/70 transition-colors touch-none",
+          isTouch ? "opacity-60" : "opacity-0 group-hover:opacity-100"
         )}
         {...attributes}
         {...listeners}
@@ -215,21 +260,15 @@ export const TaskCard = ({
         ) : (
           <span
             className={cn(
-              "text-base font-medium text-card-foreground transition-all cursor-text",
-              "hover:border-b hover:border-dashed hover:border-card-foreground/40",
+              "text-base font-medium text-card-foreground transition-all",
+              // Only show cursor-text on desktop; on touch the onClick handles it
+              !isTouch && "cursor-text hover:border-b hover:border-dashed hover:border-card-foreground/40",
               task.completed && "line-through text-card-foreground/50"
             )}
-            onClick={(e) => {
-              if (isTouch) {
-                e.stopPropagation();
-                if (!overlay) setEditing(true);
-              }
-            }}
             onDoubleClick={(e) => {
-              e.stopPropagation();
-              if (isTouch) {
-                onToggle(task.id);
-              } else {
+              // Desktop: double-click to edit
+              if (!isTouch) {
+                e.stopPropagation();
                 if (!overlay) setEditing(true);
               }
             }}
@@ -301,7 +340,7 @@ export const TaskCard = ({
           onDelete(task.id);
         }}
         className={cn(
-          "ml-2 text-card-foreground/50 hover:text-destructive hover:bg-destructive/10 rounded-full p-1 transition-all",
+          "flex-shrink-0 text-card-foreground/50 hover:text-destructive hover:bg-destructive/10 rounded-full p-1 transition-all",
           isTouch ? "opacity-100" : "opacity-0 group-hover:opacity-100"
         )}
       >

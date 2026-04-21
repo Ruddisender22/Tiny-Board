@@ -39,11 +39,12 @@ export const translations = {
     themeDark: "Dark",
     changelogEntries: [
       {
-        version: "1.6.0",
+        version: "1.7.0",
         changes: [
-          "Rediseñado el botón de crear tarea en reposo (más grande y sólido)",
-          "Rapid-entry mode: Create tasks continuously without reopening the menu",
-          "Fixed sticky create-task frame looping bug when scrolling",
+          "Improved create-task button: translucent in-flow, solid when floating",
+          "Fixed mobile double-tap to complete with proper timer",
+          "Fixed use-before-declare crash for isStuck detection",
+          "Polished touch controls: drag handle always visible at low opacity",
         ],
       },
       {
@@ -156,11 +157,11 @@ export const translations = {
     themeDark: "Oscuro",
     changelogEntries: [
       {
-        version: "1.6.0",
+        version: "1.7.0",
         changes: [
-          "Rediseñado el botón de crear tarea en reposo (más grande y sólido)",
-          "Modo de entrada rápida: Crea tareas continuamente sin reabrir el menú",
-          "Arreglado parpadeo del menú de crear tarea al hacer scroll",
+          "Botón de crear tarea mejorado: traslúcido en la lista, sólido al flotar",
+          "Doble toque en móvil corregido con detección por temporizador",
+          "Controles táctiles pulidos: asa de arrastre siempre visible",
         ],
       },
       {

@@ -13,6 +13,7 @@ interface CreateTaskFrameProps {
   onSubmit: (name: string, color: TaskColor, tags: string[]) => void;
   onCancel: () => void;
   lang: Lang;
+  /** True when the frame is sticky at the bottom of the viewport */
   isStuck?: boolean;
 }
 
@@ -29,6 +30,7 @@ export const CreateTaskFrame = forwardRef<CreateTaskFrameHandle, CreateTaskFrame
     const [tagDraft, setTagDraft] = useState("");
     const inputRef = useRef<HTMLInputElement>(null);
 
+    // Reset and focus when activated
     useEffect(() => {
       if (active) {
         setName("");
@@ -40,8 +42,8 @@ export const CreateTaskFrame = forwardRef<CreateTaskFrameHandle, CreateTaskFrame
     }, [active]);
 
     const commitTag = () => {
-      const t = tagDraft.trim().replace(/^#/, "");
-      if (t && !tags.includes(t)) setTags((prev) => [...prev, t]);
+      const val = tagDraft.trim().replace(/^#/, "");
+      if (val && !tags.includes(val)) setTags((prev) => [...prev, val]);
       setTagDraft("");
     };
 
@@ -52,6 +54,7 @@ export const CreateTaskFrame = forwardRef<CreateTaskFrameHandle, CreateTaskFrame
       if (draft && !finalTags.includes(draft)) finalTags.push(draft);
       if (trimmed) {
         onSubmit(trimmed, color, finalTags);
+        // Clear and keep open for rapid entry
         setName("");
         setTagDraft("");
         setTags([]);
@@ -76,18 +79,25 @@ export const CreateTaskFrame = forwardRef<CreateTaskFrameHandle, CreateTaskFrame
       }
     };
 
+    // ── Active state ──────────────────────────────────────────────────────
     if (active) {
       return (
         <motion.div
           layout
           data-create-frame
           initial={{ opacity: 0, y: -6 }}
-          animate={{ opacity: 1, y: 0 }}
+          animate={{
+            opacity: 1,
+            y: 0,
+            // When stuck, add a bit of horizontal padding to feel "floaty"
+            scale: isStuck ? 1.01 : 1,
+          }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.18 }}
           onClick={(e) => e.stopPropagation()}
           className={cn(
-            "rounded-2xl border-2 bg-card task-shadow-hover px-5 py-4 space-y-3"
+            "rounded-2xl border-2 bg-card task-shadow-hover space-y-3 transition-all duration-300",
+            isStuck ? "px-6 py-5 shadow-xl" : "px-5 py-4"
           )}
           style={{ borderColor: colorVar(color) }}
         >
@@ -149,6 +159,7 @@ export const CreateTaskFrame = forwardRef<CreateTaskFrameHandle, CreateTaskFrame
       );
     }
 
+    // ── Inactive button ───────────────────────────────────────────────────
     return (
       <AnimatePresence>
         {visible && (
@@ -156,10 +167,10 @@ export const CreateTaskFrame = forwardRef<CreateTaskFrameHandle, CreateTaskFrame
             type="button"
             data-create-frame
             layout
-            initial={{ opacity: 0, scale: 0.98, y: -4 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.98 }}
-            whileHover={{ scale: 1.02 }}
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            whileHover={{ scale: 1.01 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
             onClick={(e) => {
               e.stopPropagation();
@@ -168,11 +179,13 @@ export const CreateTaskFrame = forwardRef<CreateTaskFrameHandle, CreateTaskFrame
             className={cn(
               "flex w-full items-center gap-3 rounded-2xl border-2 transition-all duration-300",
               isStuck
-                ? "bg-card px-6 py-5 border-border shadow-md text-card-foreground/70 hover:border-card-foreground/30 hover:text-card-foreground hover:shadow-lg"
-                : "bg-card/40 backdrop-blur-sm px-5 py-4 border-dashed border-skeleton-border text-card-foreground/50 hover:border-card-foreground/40 hover:text-card-foreground"
+                // Floating at bottom: solid, larger, prominent shadow
+                ? "bg-card border-border shadow-lg px-6 py-5 text-card-foreground/70 hover:border-card-foreground/30 hover:text-card-foreground hover:shadow-xl"
+                // In-flow below last task: translucent, dashed border
+                : "bg-card/40 backdrop-blur-sm border-dashed border-border/60 px-5 py-4 text-card-foreground/50 hover:bg-card/70 hover:border-card-foreground/40 hover:text-card-foreground"
             )}
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="h-4 w-4 flex-shrink-0" />
             <span className="text-base font-medium">{t.createTask}</span>
           </motion.button>
         )}
