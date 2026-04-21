@@ -16,10 +16,11 @@ import {
   arrayMove,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { Github, X, HelpCircle } from "lucide-react";
+import { Github, X, HelpCircle, Globe } from "lucide-react";
 import { TaskCard, Task } from "./TaskCard";
 import { CreateTaskFrame, CreateTaskFrameHandle } from "./CreateTaskFrame";
 import { TaskColor, DEFAULT_HUE } from "@/lib/taskColors";
+import { translations, Lang, loadLang, saveLang } from "@/lib/i18n";
 
 const STORAGE_KEY = "whiteboard:tasks:v2";
 const GITHUB_USER = "Ruddisender22";
@@ -71,7 +72,6 @@ const loadTasks = (): Task[] => {
   }
 };
 
-/** Sort tasks so completed ones sink to the bottom while preserving relative order. */
 const sortWithCompletedLast = (tasks: Task[]): Task[] => {
   const active = tasks.filter((t) => !t.completed);
   const done = tasks.filter((t) => t.completed);
@@ -80,84 +80,119 @@ const sortWithCompletedLast = (tasks: Task[]): Task[] => {
 
 /* ─── Help modal ────────────────────────────────────────────────────── */
 
-const HelpModal = ({ open, onClose }: { open: boolean; onClose: () => void }) => (
-  <AnimatePresence>
-    {open && (
-      <motion.div
-        className="fixed inset-0 z-[100] flex items-center justify-center px-4"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.15 }}
-        onClick={onClose}
-      >
-        {/* Backdrop */}
-        <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
+const HelpModal = ({ open, onClose, lang }: { open: boolean; onClose: () => void; lang: Lang }) => {
+  const t = translations[lang];
+  const [tab, setTab] = useState<"help" | "changelog">("help");
 
-        {/* Panel */}
+  return (
+    <AnimatePresence>
+      {open && (
         <motion.div
-          className="relative z-10 w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl"
-          initial={{ scale: 0.95, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.95, opacity: 0 }}
-          transition={{ type: "spring", stiffness: 400, damping: 30 }}
-          onClick={(e) => e.stopPropagation()}
+          className="fixed inset-0 z-[100] flex items-center justify-center px-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.15 }}
+          onClick={onClose}
         >
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-foreground">Controls & Features</h2>
-            <button
-              type="button"
-              onClick={onClose}
-              className="h-7 w-7 grid place-items-center rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-              aria-label="Close help"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
 
-          <ul className="space-y-2.5 text-sm text-muted-foreground">
-            <li className="flex gap-2">
-              <span className="text-foreground font-medium shrink-0">Hover</span>
-              <span>— over the board to reveal the create-task button.</span>
-            </li>
-            <li className="flex gap-2">
-              <span className="text-foreground font-medium shrink-0">Double-click</span>
-              <span>— a task name to rename it inline.</span>
-            </li>
-            <li className="flex gap-2">
-              <span className="text-foreground font-medium shrink-0">Right-click</span>
-              <span>— a task to toggle complete / not complete.</span>
-            </li>
-            <li className="flex gap-2">
-              <span className="text-foreground font-medium shrink-0">Drag</span>
-              <span>— the ⠿ handle to reorder tasks.</span>
-            </li>
-            <li className="flex gap-2">
-              <span className="text-foreground font-medium shrink-0">Color dot</span>
-              <span>— click the dot to change the task color.</span>
-            </li>
-            <li className="flex gap-2">
-              <span className="text-foreground font-medium shrink-0">Tags</span>
-              <span>— click "+ tag" to add tags, then use the filter bar.</span>
-            </li>
-            <li className="flex gap-2">
-              <span className="text-foreground font-medium shrink-0">Status bar</span>
-              <span>— switch between All / Active / Completed views.</span>
-            </li>
-            <li className="flex gap-2">
-              <span className="text-foreground font-medium shrink-0">✕ button</span>
-              <span>— delete a task (appears on hover).</span>
-            </li>
-          </ul>
+          {/* Panel */}
+          <motion.div
+            className="relative z-10 w-full max-w-md rounded-2xl border-2 border-border/60 bg-card p-6 shadow-2xl"
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.95, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setTab("help")}
+                  className={`text-sm font-semibold px-3 py-1 rounded-full transition-all ${
+                    tab === "help"
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {t.helpTitle}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTab("changelog")}
+                  className={`text-sm font-semibold px-3 py-1 rounded-full transition-all ${
+                    tab === "changelog"
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {t.changelog}
+                </button>
+              </div>
+              <button
+                type="button"
+                onClick={onClose}
+                className="h-7 w-7 grid place-items-center rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                aria-label="Close"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
 
-          <p className="mt-4 text-xs text-muted-foreground/50 text-center">
-            All tasks are saved automatically in your browser.
-          </p>
+            {tab === "help" ? (
+              <>
+                {/* Controls grid — each in its own card */}
+                <div className="grid grid-cols-1 gap-2">
+                  {t.help.map(({ key, desc }) => (
+                    <div
+                      key={key}
+                      className="flex gap-3 items-start rounded-xl border border-border/50 bg-muted/30 px-4 py-3"
+                    >
+                      <span className="text-sm font-semibold text-foreground shrink-0 min-w-[90px]">
+                        {key}
+                      </span>
+                      <span className="text-sm text-muted-foreground">{desc}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <p className="mt-4 text-xs text-muted-foreground/50 text-center">
+                  {t.helpSaved}
+                </p>
+              </>
+            ) : (
+              /* Changelog */
+              <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-1">
+                {t.changelogEntries.map((entry) => (
+                  <div key={entry.version}>
+                    <h3 className="text-sm font-semibold text-foreground mb-1.5">
+                      v{entry.version}
+                    </h3>
+                    <ul className="space-y-1">
+                      {entry.changes.map((change, i) => (
+                        <li
+                          key={i}
+                          className="flex items-start gap-2 text-sm text-muted-foreground rounded-lg border border-border/40 bg-muted/20 px-3 py-2"
+                        >
+                          <span className="text-primary mt-0.5 shrink-0">•</span>
+                          {change}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            )}
+          </motion.div>
         </motion.div>
-      </motion.div>
-    )}
-  </AnimatePresence>
-);
+      )}
+    </AnimatePresence>
+  );
+};
 
 /* ─── Main whiteboard ───────────────────────────────────────────────── */
 
@@ -169,8 +204,17 @@ export const Whiteboard = () => {
   const [filterTag, setFilterTag] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [helpOpen, setHelpOpen] = useState(false);
+  const [lang, setLang] = useState<Lang>(() => loadLang());
   const boardRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<CreateTaskFrameHandle>(null);
+
+  const t = translations[lang];
+
+  const toggleLang = () => {
+    const next: Lang = lang === "en" ? "es" : "en";
+    setLang(next);
+    saveLang(next);
+  };
 
   // Sticky create-frame logic
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -195,14 +239,12 @@ export const Whiteboard = () => {
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } })
   );
 
-  // Collect all unique tags across tasks
   const allTags = useMemo(() => {
     const set = new Set<string>();
     tasks.forEach((t) => t.tags.forEach((tag) => set.add(tag)));
     return Array.from(set).sort();
   }, [tasks]);
 
-  // Sorted and filtered task list
   const displayedTasks = useMemo(() => {
     let list = sortWithCompletedLast(tasks);
     if (statusFilter === "active") list = list.filter((t) => !t.completed);
@@ -211,7 +253,6 @@ export const Whiteboard = () => {
     return list;
   }, [tasks, filterTag, statusFilter]);
 
-  // Whether toggling a task in the current filter should trigger slide-right exit
   const shouldSlideRight = statusFilter !== "all";
 
   const addTask = useCallback((name: string, color: TaskColor, tags: string[]) => {
@@ -279,9 +320,9 @@ export const Whiteboard = () => {
   };
 
   const statusLabels: { key: StatusFilter; label: string }[] = [
-    { key: "all", label: "All" },
-    { key: "active", label: "Active" },
-    { key: "completed", label: "Completed" },
+    { key: "all", label: t.all },
+    { key: "active", label: t.active },
+    { key: "completed", label: t.completed },
   ];
 
   const showCreateFrame = hovered || creating;
@@ -298,10 +339,10 @@ export const Whiteboard = () => {
       <div className="mx-auto w-full max-w-2xl">
         <header className="mb-10 text-center">
           <h1 className="text-4xl font-semibold tracking-tight text-foreground">
-            Ruddis' Tiny Board
+            {t.title}
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Hover anywhere to create a task. Drag to reorder. Right-click to complete.
+            {t.subtitle}
           </p>
         </header>
 
@@ -328,7 +369,7 @@ export const Whiteboard = () => {
         {/* Tag filter bar */}
         {allTags.length > 0 && (
           <div className="mb-6 flex items-center gap-2 flex-wrap justify-center">
-            <span className="text-xs text-muted-foreground/60 mr-1">Tags:</span>
+            <span className="text-xs text-muted-foreground/60 mr-1">{t.tags}</span>
             {allTags.map((tag) => (
               <button
                 key={tag}
@@ -352,7 +393,7 @@ export const Whiteboard = () => {
                 onClick={() => setFilterTag(null)}
                 className="text-xs text-muted-foreground/60 hover:text-muted-foreground underline ml-1 transition-colors"
               >
-                Clear
+                {t.clear}
               </button>
             )}
           </div>
@@ -386,7 +427,7 @@ export const Whiteboard = () => {
                 ))}
               </AnimatePresence>
 
-              {/* In-flow create frame (when visible at the bottom of the list) */}
+              {/* In-flow create frame */}
               {!frameSticky && (
                 <CreateTaskFrame
                   ref={frameRef}
@@ -398,7 +439,6 @@ export const Whiteboard = () => {
                 />
               )}
 
-              {/* Sentinel: when this scrolls out of view, the frame goes sticky */}
               <div ref={sentinelRef} className="h-0 w-full" aria-hidden />
             </div>
           </SortableContext>
@@ -427,7 +467,7 @@ export const Whiteboard = () => {
 
     </main>
 
-    {/* Sticky create frame — fixed at viewport bottom when scrolled past the in-flow position */}
+    {/* Sticky create frame */}
     {frameSticky && showCreateFrame && (
       <div className="fixed bottom-16 left-1/2 -translate-x-1/2 z-40 w-full max-w-2xl px-4">
         <CreateTaskFrame
@@ -441,17 +481,28 @@ export const Whiteboard = () => {
       </div>
     )}
 
-    {/* Help button */}
-    <button
-      type="button"
-      aria-label="Help"
-      onClick={() => setHelpOpen(true)}
-      className="fixed bottom-4 left-4 z-50 inline-flex items-center justify-center h-8 w-8 rounded-full bg-card/80 backdrop-blur border border-border text-muted-foreground/70 hover:text-foreground hover:bg-card transition-colors"
-    >
-      <HelpCircle className="h-4 w-4" />
-    </button>
+    {/* Bottom-left buttons: Help + Language */}
+    <div className="fixed bottom-4 left-4 z-50 flex items-center gap-2">
+      <button
+        type="button"
+        aria-label="Help"
+        onClick={() => setHelpOpen(true)}
+        className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-card/80 backdrop-blur border border-border text-muted-foreground/70 hover:text-foreground hover:bg-card transition-colors"
+      >
+        <HelpCircle className="h-4 w-4" />
+      </button>
+      <button
+        type="button"
+        aria-label="Toggle language"
+        onClick={toggleLang}
+        className="inline-flex items-center justify-center gap-1 h-8 rounded-full bg-card/80 backdrop-blur px-2.5 border border-border text-muted-foreground/70 hover:text-foreground hover:bg-card transition-colors"
+      >
+        <Globe className="h-3.5 w-3.5" />
+        <span className="text-[10px] font-semibold uppercase">{lang === "en" ? "ES" : "EN"}</span>
+      </button>
+    </div>
 
-    <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} />
+    <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} lang={lang} />
 
     <footer className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 text-xs text-muted-foreground/70 pointer-events-none">
       <a
@@ -462,7 +513,7 @@ export const Whiteboard = () => {
         onClick={(e) => e.stopPropagation()}
       >
         <Github className="h-3.5 w-3.5" />
-        Made by @{GITHUB_USER}
+        {t.madeBy} @{GITHUB_USER}
       </a>
     </footer>
 
