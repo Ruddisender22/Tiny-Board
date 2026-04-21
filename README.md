@@ -19,10 +19,10 @@ Everything saves to your browser automatically.
 
 ## Releases
 
-- **v1.0.5 (Current Release)**: 
-  - Complete mobile adaptation with touch support (double tap to complete, single tap to edit, hold to move).
+- **v1.0.6 (Current Release)**: 
+  - Rapid-entry mode: Create tasks continuously without reopening the menu.
   - Global `Enter` shortcut to instantly open the task creator.
-  - Fixes for sticky frame visibility and mobile keyboard behavior.
+  - Fixed sticky frame scrolling bugs and mobile keyboard behavior.
   - Three visual themes (Light, Mixed, Dark) with optional Full-Color cards.
   - English and Spanish localization.
 

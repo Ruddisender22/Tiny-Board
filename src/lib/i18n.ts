@@ -39,11 +39,10 @@ export const translations = {
     themeDark: "Dark",
     changelogEntries: [
       {
-        version: "1.0.5",
+        version: "1.0.6",
         changes: [
-          "Global Enter shortcut to create tasks",
-          "Fixed sticky create-task frame disappearing bug",
-          "Fixed mobile keyboard Enter submission bug",
+          "Rapid-entry mode: Create tasks continuously without reopening the menu",
+          "Fixed sticky create-task frame looping bug when scrolling",
         ],
       },
       {
@@ -156,11 +155,10 @@ export const translations = {
     themeDark: "Oscuro",
     changelogEntries: [
       {
-        version: "1.0.5",
+        version: "1.0.6",
         changes: [
-          "Atajo global (Enter) para crear tareas",
-          "Arreglado bug visual del botón flotante de crear tarea",
-          "Arreglado envío con teclado en móviles",
+          "Modo de entrada rápida: Crea tareas continuamente sin reabrir el menú",
+          "Arreglado parpadeo del menú de crear tarea al hacer scroll",
         ],
       },
       {

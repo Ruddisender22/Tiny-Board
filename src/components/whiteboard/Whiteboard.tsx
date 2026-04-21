@@ -291,20 +291,6 @@ export const Whiteboard = () => {
   const handleThemeChange = (th: Theme) => { setTheme(th); saveTheme(th); };
   const handleFullColorChange = (v: boolean) => { setFullColor(v); saveFullColor(v); };
 
-  // Sticky create-frame logic
-  const sentinelRef = useRef<HTMLDivElement>(null);
-  const [frameSticky, setFrameSticky] = useState(false);
-
-  useEffect(() => {
-    const el = sentinelRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => setFrameSticky(!entry.isIntersecting),
-      { threshold: 0 }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [displayedTasks.length]);
 
   // Global Enter shortcut
   useEffect(() => {
@@ -346,12 +332,12 @@ export const Whiteboard = () => {
 
   const shouldSlideRight = statusFilter !== "all";
 
+
   const addTask = useCallback((name: string, color: TaskColor, tags: string[]) => {
     setTasks((prev) => [
       { id: crypto.randomUUID(), name, color, completed: false, tags },
       ...prev,
     ]);
-    setCreating(false);
   }, []);
 
   const toggleTask = useCallback((id: string) => {
@@ -479,13 +465,14 @@ export const Whiteboard = () => {
                 ))}
               </AnimatePresence>
 
-              {!frameSticky && (
-                <CreateTaskFrame ref={frameRef} visible={showCreateFrame} active={creating}
-                  onActivate={() => setCreating(true)} onSubmit={addTask} onCancel={() => setCreating(false)}
-                  lang={lang}
-                />
-              )}
-              <div ref={sentinelRef} className="h-0 w-full" aria-hidden />
+              <div className="sticky bottom-16 z-40 pb-4">
+                {showCreateFrame && (
+                  <CreateTaskFrame ref={frameRef} visible={showCreateFrame} active={creating}
+                    onActivate={() => setCreating(true)} onSubmit={addTask} onCancel={() => setCreating(false)}
+                    lang={lang}
+                  />
+                )}
+              </div>
             </div>
           </SortableContext>
           <DragOverlay dropAnimation={{ duration: 200, easing: "cubic-bezier(0.18, 0.67, 0.6, 1.22)" }}>
@@ -500,17 +487,6 @@ export const Whiteboard = () => {
       </div>
     </main>
 
-    {/* Sticky create frame */}
-    {frameSticky && showCreateFrame && (
-      <div className="fixed bottom-16 left-1/2 -translate-x-1/2 z-40 w-full max-w-2xl px-4 pointer-events-none">
-        <div className="pointer-events-auto">
-          <CreateTaskFrame ref={frameRef} visible active={creating}
-            onActivate={() => setCreating(true)} onSubmit={addTask} onCancel={() => setCreating(false)}
-            lang={lang}
-          />
-        </div>
-      </div>
-    )}
     </div>
 
     {/* Bottom-left buttons: Help + Settings */}

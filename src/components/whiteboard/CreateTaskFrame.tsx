@@ -49,8 +49,15 @@ export const CreateTaskFrame = forwardRef<CreateTaskFrameHandle, CreateTaskFrame
       const finalTags = [...tags];
       const draft = tagDraft.trim().replace(/^#/, "");
       if (draft && !finalTags.includes(draft)) finalTags.push(draft);
-      if (trimmed) onSubmit(trimmed, color, finalTags);
-      else onCancel();
+      if (trimmed) {
+        onSubmit(trimmed, color, finalTags);
+        setName("");
+        setTagDraft("");
+        setTags([]);
+        requestAnimationFrame(() => inputRef.current?.focus());
+      } else {
+        onCancel();
+      }
     };
 
     useImperativeHandle(ref, () => ({ submit }), [name, color, tags, tagDraft]);
@@ -96,6 +103,7 @@ export const CreateTaskFrame = forwardRef<CreateTaskFrameHandle, CreateTaskFrame
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
+                  e.stopPropagation();
                   submit();
                 } else if (e.key === "Escape") {
                   onCancel();
