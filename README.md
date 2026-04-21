@@ -19,7 +19,7 @@ Everything saves to your browser automatically.
 
 ## Releases
 
-- **v1.0.6 (Current Release)**: 
+- **v1.6.0 (Current Release)**: 
   - Rapid-entry mode: Create tasks continuously without reopening the menu.
   - Global `Enter` shortcut to instantly open the task creator.
   - Fixed sticky frame scrolling bugs and mobile keyboard behavior.

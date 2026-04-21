@@ -13,6 +13,7 @@ interface CreateTaskFrameProps {
   onSubmit: (name: string, color: TaskColor, tags: string[]) => void;
   onCancel: () => void;
   lang: Lang;
+  isStuck?: boolean;
 }
 
 export interface CreateTaskFrameHandle {
@@ -20,7 +21,7 @@ export interface CreateTaskFrameHandle {
 }
 
 export const CreateTaskFrame = forwardRef<CreateTaskFrameHandle, CreateTaskFrameProps>(
-  ({ visible, active, onActivate, onSubmit, onCancel, lang }, ref) => {
+  ({ visible, active, onActivate, onSubmit, onCancel, lang, isStuck = false }, ref) => {
     const t = translations[lang];
     const [name, setName] = useState("");
     const [color, setColor] = useState<TaskColor>(DEFAULT_HUE);
@@ -155,18 +156,20 @@ export const CreateTaskFrame = forwardRef<CreateTaskFrameHandle, CreateTaskFrame
             type="button"
             data-create-frame
             layout
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 0.6, y: 0 }}
-            exit={{ opacity: 0 }}
-            whileHover={{ opacity: 1 }}
-            transition={{ duration: 0.18 }}
+            initial={{ opacity: 0, scale: 0.98, y: -4 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            whileHover={{ scale: 1.02 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
             onClick={(e) => {
               e.stopPropagation();
               onActivate();
             }}
             className={cn(
-              "flex w-full items-center gap-3 rounded-2xl border-2 border-dashed border-skeleton-border",
-              "bg-card/40 backdrop-blur-sm px-5 py-4 text-card-foreground/70 hover:border-card-foreground/40 hover:text-card-foreground transition-colors"
+              "flex w-full items-center gap-3 rounded-2xl border-2 transition-all duration-300",
+              isStuck
+                ? "bg-card px-6 py-5 border-border shadow-md text-card-foreground/70 hover:border-card-foreground/30 hover:text-card-foreground hover:shadow-lg"
+                : "bg-card/40 backdrop-blur-sm px-5 py-4 border-dashed border-skeleton-border text-card-foreground/50 hover:border-card-foreground/40 hover:text-card-foreground"
             )}
           >
             <Plus className="h-4 w-4" />

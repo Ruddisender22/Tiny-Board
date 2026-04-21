@@ -291,6 +291,25 @@ export const Whiteboard = () => {
   const handleThemeChange = (th: Theme) => { setTheme(th); saveTheme(th); };
   const handleFullColorChange = (v: boolean) => { setFullColor(v); saveFullColor(v); };
 
+  // Detect when the sticky create-frame is floating
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const [isStuck, setIsStuck] = useState(false);
+
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        // If the sentinel (placed right above the sticky element) is not intersecting,
+        // it means we haven't scrolled down far enough, so the element is "stuck" at the bottom.
+        setIsStuck(!entry.isIntersecting);
+      },
+      { threshold: 0 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [displayedTasks.length]);
+
 
   // Global Enter shortcut
   useEffect(() => {
@@ -465,11 +484,12 @@ export const Whiteboard = () => {
                 ))}
               </AnimatePresence>
 
+              <div ref={sentinelRef} className="h-0 w-full" aria-hidden />
               <div className="sticky bottom-16 z-40 pb-4">
                 {showCreateFrame && (
                   <CreateTaskFrame ref={frameRef} visible={showCreateFrame} active={creating}
                     onActivate={() => setCreating(true)} onSubmit={addTask} onCancel={() => setCreating(false)}
-                    lang={lang}
+                    lang={lang} isStuck={isStuck}
                   />
                 )}
               </div>

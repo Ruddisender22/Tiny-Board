@@ -39,8 +39,9 @@ export const translations = {
     themeDark: "Dark",
     changelogEntries: [
       {
-        version: "1.0.6",
+        version: "1.6.0",
         changes: [
+          "Rediseñado el botón de crear tarea en reposo (más grande y sólido)",
           "Rapid-entry mode: Create tasks continuously without reopening the menu",
           "Fixed sticky create-task frame looping bug when scrolling",
         ],
@@ -155,8 +156,9 @@ export const translations = {
     themeDark: "Oscuro",
     changelogEntries: [
       {
-        version: "1.0.6",
+        version: "1.6.0",
         changes: [
+          "Rediseñado el botón de crear tarea en reposo (más grande y sólido)",
           "Modo de entrada rápida: Crea tareas continuamente sin reabrir el menú",
           "Arreglado parpadeo del menú de crear tarea al hacer scroll",
         ],
