@@ -10,6 +10,7 @@ import {
   DragEndEvent,
   DragStartEvent,
   DragOverlay,
+  TouchSensor,
 } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -28,6 +29,7 @@ import {
   loadTheme, saveTheme,
   loadFullColor, saveFullColor,
 } from "@/lib/i18n";
+import { useIsTouchDevice } from "@/lib/utils";
 
 const STORAGE_KEY = "whiteboard:tasks:v2";
 const GITHUB_USER = "Ruddisender22";
@@ -276,6 +278,7 @@ export const Whiteboard = () => {
   const [fullColor, setFullColor] = useState(() => loadFullColor());
   const boardRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<CreateTaskFrameHandle>(null);
+  const isTouch = useIsTouchDevice();
 
   const t = translations[lang];
 
@@ -308,7 +311,8 @@ export const Whiteboard = () => {
   }, [tasks]);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 4 } })
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } })
   );
 
   const allTags = useMemo(() => {
@@ -391,7 +395,7 @@ export const Whiteboard = () => {
     { key: "completed", label: t.completed },
   ];
 
-  const showCreateFrame = hovered || creating;
+  const showCreateFrame = hovered || creating || isTouch;
 
   return (
     <>

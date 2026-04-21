@@ -3,7 +3,7 @@ import { X, GripVertical, Plus } from "lucide-react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useState, useRef, useEffect, KeyboardEvent } from "react";
-import { cn } from "@/lib/utils";
+import { cn, useIsTouchDevice } from "@/lib/utils";
 import { colorVar, colorVarSoft, TaskColor } from "@/lib/taskColors";
 import { Lang, translations } from "@/lib/i18n";
 import { HueSlider } from "./HueSlider";
@@ -49,6 +49,7 @@ export const TaskCard = ({
   const t = translations[lang];
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: task.id, disabled: overlay });
+  const isTouch = useIsTouchDevice();
 
   const [tagDraft, setTagDraft] = useState("");
   const [adding, setAdding] = useState(false);
@@ -163,7 +164,10 @@ export const TaskCard = ({
         type="button"
         aria-label="Drag to reorder"
         onClick={(e) => e.stopPropagation()}
-        className="ml-1 -mr-1 cursor-grab active:cursor-grabbing text-card-foreground/40 hover:text-card-foreground/70 transition-colors opacity-0 group-hover:opacity-100"
+        className={cn(
+          "ml-1 -mr-1 cursor-grab active:cursor-grabbing text-card-foreground/40 hover:text-card-foreground/70 transition-colors",
+          isTouch ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+        )}
         {...attributes}
         {...listeners}
       >
@@ -215,9 +219,19 @@ export const TaskCard = ({
               "hover:border-b hover:border-dashed hover:border-card-foreground/40",
               task.completed && "line-through text-card-foreground/50"
             )}
+            onClick={(e) => {
+              if (isTouch) {
+                e.stopPropagation();
+                if (!overlay) setEditing(true);
+              }
+            }}
             onDoubleClick={(e) => {
               e.stopPropagation();
-              if (!overlay) setEditing(true);
+              if (isTouch) {
+                onToggle(task.id);
+              } else {
+                if (!overlay) setEditing(true);
+              }
             }}
           >
             {task.name}
@@ -237,7 +251,10 @@ export const TaskCard = ({
                 e.stopPropagation();
                 onRemoveTag(task.id, tag);
               }}
-              className="hover:text-card-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+              className={cn(
+                "hover:text-card-foreground transition-opacity",
+                isTouch ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+              )}
               aria-label={`Remove ${tag}`}
             >
               <X className="h-3 w-3" />
@@ -264,7 +281,10 @@ export const TaskCard = ({
               e.stopPropagation();
               setAdding(true);
             }}
-            className="inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-xs text-card-foreground/60 hover:bg-card-foreground/10 hover:text-card-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+            className={cn(
+              "inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-xs text-card-foreground/60 hover:bg-card-foreground/10 hover:text-card-foreground transition-opacity",
+              isTouch ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+            )}
           >
             <Plus className="h-3 w-3" />
             {t.tag}
@@ -272,7 +292,7 @@ export const TaskCard = ({
         )}
       </div>
 
-      {/* Delete */}
+      {/* Delete button */}
       <button
         type="button"
         aria-label="Delete task"
@@ -280,7 +300,10 @@ export const TaskCard = ({
           e.stopPropagation();
           onDelete(task.id);
         }}
-        className="flex-shrink-0 h-8 w-8 grid place-items-center rounded-full text-card-foreground/50 hover:text-destructive hover:bg-destructive/10 transition-colors opacity-0 group-hover:opacity-100"
+        className={cn(
+          "ml-2 text-card-foreground/50 hover:text-destructive hover:bg-destructive/10 rounded-full p-1 transition-all",
+          isTouch ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+        )}
       >
         <X className="h-4 w-4" />
       </button>

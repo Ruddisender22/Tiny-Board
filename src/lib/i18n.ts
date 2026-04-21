@@ -17,10 +17,10 @@ export const translations = {
     helpTitle: "Controls & Features",
     helpSaved: "All tasks are saved automatically in your browser.",
     help: [
-      { key: "Hover", desc: "over the board to reveal the create-task button." },
-      { key: "Double-click", desc: "a task name to rename it inline." },
-      { key: "Right-click", desc: "a task to toggle complete / not complete." },
-      { key: "Drag", desc: "the ⠿ handle to reorder tasks." },
+      { key: "Hover", desc: "over the board to reveal the create-task button (always visible on mobile)." },
+      { key: "Double-click / Tap", desc: "a task name to rename it inline." },
+      { key: "Right-click / Double-tap", desc: "a task to toggle complete / not complete." },
+      { key: "Drag / Hold", desc: "the ⠿ handle to reorder tasks." },
       { key: "Color dot", desc: "click the dot to change the task color." },
       { key: "Tags", desc: "click \"+ tag\" to add tags, then use the filter bar." },
       { key: "Status bar", desc: "switch between All / Active / Completed views." },
@@ -38,6 +38,15 @@ export const translations = {
     themeMixed: "Mixed",
     themeDark: "Dark",
     changelogEntries: [
+      {
+        version: "1.0.4",
+        changes: [
+          "Mobile adaptation with touch support",
+          "Double-tap to complete tasks",
+          "Single-tap to edit tasks",
+          "Hold drag handle to move",
+        ],
+      },
       {
         version: "1.0.3",
         changes: [
@@ -117,10 +126,10 @@ export const translations = {
     helpTitle: "Controles y Funciones",
     helpSaved: "Todas las tareas se guardan automáticamente en tu navegador.",
     help: [
-      { key: "Pasar el ratón", desc: "sobre el tablero para ver el botón de crear tarea." },
-      { key: "Doble clic", desc: "en el nombre de una tarea para editarlo." },
-      { key: "Clic derecho", desc: "en una tarea para marcar/desmarcar como completada." },
-      { key: "Arrastrar", desc: "el icono ⠿ para reordenar las tareas." },
+      { key: "Pasar el ratón", desc: "sobre el tablero para ver el botón de crear tarea (siempre visible en móvil)." },
+      { key: "Doble clic / Toque", desc: "en el nombre de una tarea para editarlo." },
+      { key: "Clic derecho / Doble toque", desc: "en una tarea para marcar/desmarcar como completada." },
+      { key: "Arrastrar / Mantener", desc: "el icono ⠿ para reordenar las tareas." },
       { key: "Punto de color", desc: "clic en el punto para cambiar el color." },
       { key: "Etiquetas", desc: "clic en \"+ etiqueta\" para añadir, luego usa el filtro." },
       { key: "Barra de estado", desc: "cambia entre Todas / Activas / Completadas." },
@@ -138,6 +147,15 @@ export const translations = {
     themeMixed: "Mixto",
     themeDark: "Oscuro",
     changelogEntries: [
+      {
+        version: "1.0.4",
+        changes: [
+          "Adaptación completa para móviles y pantallas táctiles",
+          "Doble toque para completar tareas",
+          "Un solo toque para editar tareas",
+          "Mantener presionado el icono para mover",
+        ],
+      },
       {
         version: "1.0.3",
         changes: [
