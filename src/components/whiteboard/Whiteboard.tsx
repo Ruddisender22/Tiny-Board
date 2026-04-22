@@ -17,7 +17,7 @@ import {
   arrayMove,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { Github, X, HelpCircle, Settings, Sun, Moon, Cloud } from "lucide-react";
+import { Github, X, HelpCircle, Settings, Sun, Moon, Cloud, Trash2 } from "lucide-react";
 import { TaskCard, Task } from "./TaskCard";
 import { CreateTaskFrame, CreateTaskFrameHandle } from "./CreateTaskFrame";
 import { TaskColor, DEFAULT_HUE } from "@/lib/taskColors";
@@ -273,6 +273,7 @@ export const Whiteboard = () => {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [helpOpen, setHelpOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
   const [lang, setLang] = useState<Lang>(() => loadLang());
   const [theme, setTheme] = useState<Theme>(() => loadTheme());
   const [fullColor, setFullColor] = useState(() => loadFullColor());
@@ -382,6 +383,11 @@ export const Whiteboard = () => {
 
   const renameTask = useCallback((id: string, name: string) => {
     setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, name } : t)));
+  }, []);
+
+  const deleteAllTasks = useCallback(() => {
+    setTasks([]);
+    setConfirmDeleteAll(false);
   }, []);
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -508,7 +514,7 @@ export const Whiteboard = () => {
 
     </div>
 
-    {/* Bottom-left buttons: Help + Settings */}
+    {/* Bottom-left buttons: Help + Settings + Delete All */}
     <div className="fixed bottom-4 left-4 z-50 flex items-center gap-2">
       <button type="button" aria-label="Help" onClick={() => setHelpOpen(true)}
         className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-card/80 backdrop-blur border border-border text-card-foreground/70 hover:text-card-foreground hover:bg-card transition-colors"
@@ -516,6 +522,22 @@ export const Whiteboard = () => {
       <button type="button" aria-label="Settings" onClick={() => setSettingsOpen(true)}
         className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-card/80 backdrop-blur border border-border text-card-foreground/70 hover:text-card-foreground hover:bg-card transition-colors"
       ><Settings className="h-4 w-4" /></button>
+      <AnimatePresence>
+        {tasks.length > 0 && (
+          <motion.button
+            type="button"
+            aria-label={t.deleteAll}
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ duration: 0.15 }}
+            onClick={() => setConfirmDeleteAll(true)}
+            className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-card/80 backdrop-blur border border-border text-card-foreground/70 hover:text-destructive hover:border-destructive/50 hover:bg-destructive/10 transition-colors"
+          >
+            <Trash2 className="h-4 w-4" />
+          </motion.button>
+        )}
+      </AnimatePresence>
     </div>
 
     <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} lang={lang} />
@@ -524,6 +546,49 @@ export const Whiteboard = () => {
       theme={theme} onThemeChange={handleThemeChange}
       fullColor={fullColor} onFullColorChange={handleFullColorChange}
     />
+
+    {/* Confirm delete all dialog */}
+    <AnimatePresence>
+      {confirmDeleteAll && (
+        <motion.div
+          className="fixed inset-0 z-[100] flex items-center justify-center px-4"
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          transition={{ duration: 0.15 }}
+          onClick={() => setConfirmDeleteAll(false)}
+        >
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
+          <motion.div
+            className="relative bg-card border border-border rounded-2xl p-6 w-full max-w-sm shadow-xl space-y-4"
+            initial={{ scale: 0.95, y: 8 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 8 }}
+            transition={{ duration: 0.15 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3">
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-destructive/10 text-destructive flex-shrink-0">
+                <Trash2 className="h-4 w-4" />
+              </span>
+              <p className="text-sm text-card-foreground font-medium">{t.deleteAllConfirm}</p>
+            </div>
+            <div className="flex gap-2 justify-end">
+              <button
+                type="button"
+                onClick={() => setConfirmDeleteAll(false)}
+                className="px-4 py-2 text-sm rounded-xl border border-border text-card-foreground/70 hover:text-card-foreground hover:bg-muted transition-colors"
+              >
+                {t.clear}
+              </button>
+              <button
+                type="button"
+                onClick={deleteAllTasks}
+                className="px-4 py-2 text-sm rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors font-medium"
+              >
+                {t.deleteAll}
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
 
     <footer className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 text-xs pointer-events-none">
       <a href={`https://github.com/${GITHUB_USER}`} target="_blank" rel="noopener noreferrer"

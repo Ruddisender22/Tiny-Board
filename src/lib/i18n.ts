@@ -37,7 +37,15 @@ export const translations = {
     themeLight: "Light",
     themeMixed: "Mixed",
     themeDark: "Dark",
+    deleteAll: "Delete all",
+    deleteAllConfirm: "Delete all tasks? This cannot be undone.",
     changelogEntries: [
+      {
+        version: "1.8.0",
+        changes: [
+          "Added \"Delete all\" button to clear the board instantly",
+        ],
+      },
       {
         version: "1.7.0",
         changes: [
@@ -155,7 +163,15 @@ export const translations = {
     themeLight: "Claro",
     themeMixed: "Mixto",
     themeDark: "Oscuro",
+    deleteAll: "Eliminar todo",
+    deleteAllConfirm: "¿Eliminar todas las tareas? Esto no se puede deshacer.",
     changelogEntries: [
+      {
+        version: "1.8.0",
+        changes: [
+          "Añadido botón \"Eliminar todo\" para limpiar el tablero al instante",
+        ],
+      },
       {
         version: "1.7.0",
         changes: [
