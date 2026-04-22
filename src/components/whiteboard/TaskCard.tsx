@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { X, GripVertical, Plus } from "lucide-react";
+import { X, GripVertical, Plus, CheckCircle2, Circle } from "lucide-react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useState, useRef, useEffect, useCallback, KeyboardEvent } from "react";
@@ -33,8 +33,6 @@ interface TaskCardProps {
   lang: Lang;
 }
 
-const DOUBLE_TAP_MS = 300;
-
 export const TaskCard = ({
   task,
   onToggle,
@@ -59,10 +57,6 @@ export const TaskCard = ({
   const [nameDraft, setNameDraft] = useState(task.name);
   const nameInputRef = useRef<HTMLInputElement>(null);
 
-  // Double-tap detection for mobile complete
-  const lastTapRef = useRef<number>(0);
-  const tapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   // Keep draft in sync if the task name changes externally
   useEffect(() => {
     if (!editing) setNameDraft(task.name);
@@ -75,13 +69,6 @@ export const TaskCard = ({
       nameInputRef.current.select();
     }
   }, [editing]);
-
-  // Cleanup tap timer on unmount
-  useEffect(() => {
-    return () => {
-      if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
-    };
-  }, []);
 
   const commitName = () => {
     const trimmed = nameDraft.trim();
@@ -128,34 +115,15 @@ export const TaskCard = ({
   };
 
   /**
-   * Touch tap handler:
-   * - Single tap → open inline edit
-   * - Double tap → toggle complete
+   * Touch tap handler (mobile): single tap → open inline edit
    */
   const handleTouchTap = useCallback(
     (e: React.MouseEvent) => {
       if (!isTouch || overlay) return;
       e.stopPropagation();
-
-      const now = Date.now();
-      const delta = now - lastTapRef.current;
-      lastTapRef.current = now;
-
-      if (delta < DOUBLE_TAP_MS && tapTimerRef.current) {
-        // Double-tap
-        clearTimeout(tapTimerRef.current);
-        tapTimerRef.current = null;
-        onToggle(task.id);
-      } else {
-        // Single-tap — delay to wait for possible second tap
-        if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
-        tapTimerRef.current = setTimeout(() => {
-          tapTimerRef.current = null;
-          if (!overlay) setEditing(true);
-        }, DOUBLE_TAP_MS);
-      }
+      if (!overlay) setEditing(true);
     },
-    [isTouch, overlay, onToggle, task.id]
+    [isTouch, overlay]
   );
 
   return (
@@ -330,6 +298,23 @@ export const TaskCard = ({
           </button>
         )}
       </div>
+
+      {/* Mobile: Mark complete button */}
+      {isTouch && (
+        <button
+          type="button"
+          aria-label={task.completed ? "Mark as active" : "Mark as complete"}
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggle(task.id);
+          }}
+          className="flex-shrink-0 text-card-foreground/40 hover:text-green-500 hover:bg-green-500/10 rounded-full p-1 transition-all"
+        >
+          {task.completed
+            ? <CheckCircle2 className="h-4 w-4 text-green-500" />
+            : <Circle className="h-4 w-4" />}
+        </button>
+      )}
 
       {/* Delete button */}
       <button

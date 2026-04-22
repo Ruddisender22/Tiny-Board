@@ -19,7 +19,7 @@ export const translations = {
     help: [
       { key: "Hover", desc: "over the board to reveal the create-task button (always visible on mobile)." },
       { key: "Double-click / Tap", desc: "a task name to rename it inline." },
-      { key: "Right-click / Double-tap", desc: "a task to toggle complete / not complete." },
+      { key: "Right-click / ✓ button", desc: "toggle task complete (✓ button on mobile)." },
       { key: "Drag / Hold", desc: "the ⠿ handle to reorder tasks." },
       { key: "Color dot", desc: "click the dot to change the task color." },
       { key: "Tags", desc: "click \"+ tag\" to add tags, then use the filter bar." },
@@ -44,6 +44,9 @@ export const translations = {
         version: "1.8.0",
         changes: [
           "Added \"Delete all\" button to clear the board instantly",
+          "Replaced double-tap with a dedicated mark complete button on mobile",
+          "Fixed mobile footer credits overlapping with buttons",
+          "Fixed create task tab hover state logic",
         ],
       },
       {
@@ -145,7 +148,7 @@ export const translations = {
     help: [
       { key: "Pasar el ratón", desc: "sobre el tablero para ver el botón de crear tarea (siempre visible en móvil)." },
       { key: "Doble clic / Toque", desc: "en el nombre de una tarea para editarlo." },
-      { key: "Clic derecho / Doble toque", desc: "en una tarea para marcar/desmarcar como completada." },
+      { key: "Clic derecho / botón ✓", desc: "marcar/desmarcar como completada (botón ✓ en móvil)." },
       { key: "Arrastrar / Mantener", desc: "el icono ⠿ para reordenar las tareas." },
       { key: "Punto de color", desc: "clic en el punto para cambiar el color." },
       { key: "Etiquetas", desc: "clic en \"+ etiqueta\" para añadir, luego usa el filtro." },
@@ -170,6 +173,9 @@ export const translations = {
         version: "1.8.0",
         changes: [
           "Añadido botón \"Eliminar todo\" para limpiar el tablero al instante",
+          "Reemplazado el doble toque por un botón de completar en móvil",
+          "Corregido el solapamiento de los créditos en dispositivos móviles",
+          "Corregido el estado hover de la pestaña de crear tareas",
         ],
       },
       {
