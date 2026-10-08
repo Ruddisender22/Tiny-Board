@@ -54,6 +54,13 @@ export const translations = {
     deleteAllConfirm: "Delete all tasks? This cannot be undone.",
     changelogEntries: [
       {
+        version: "1.16.0",
+        changes: [
+          "Fixed task spacing and animated cards below the live insertion preview",
+          "Preserved rounded glass styling on the column drag overlay",
+        ],
+      },
+      {
         version: "1.15.0",
         changes: [
           "Added a live insertion preview when dragging tasks between cards",
@@ -232,6 +239,13 @@ export const translations = {
     deleteAll: "Eliminar todo",
     deleteAllConfirm: "¿Eliminar todas las tareas? Esto no se puede deshacer.",
     changelogEntries: [
+      {
+        version: "1.16.0",
+        changes: [
+          "Corregido el espaciado de tarjetas y animado el desplazamiento bajo la preview",
+          "Mantenida la estética glass redondeada al arrastrar columnas",
+        ],
+      },
       {
         version: "1.15.0",
         changes: [

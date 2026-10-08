@@ -245,13 +245,13 @@ export const BoardColumn = ({
       
       {/* Column Body */}
       <div className={cn(
-        "flex-1 min-h-[180px] p-3 overflow-y-auto overscroll-contain space-y-3 kanban-scroll",
+        "flex flex-col gap-3 flex-1 min-h-[180px] p-3 overflow-y-auto overscroll-contain kanban-scroll",
         isSingleColumn && "board-column-single-body"
       )} onPointerDown={(e) => e.stopPropagation()}>
         <SortableContext items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
           <AnimatePresence initial={false} mode="popLayout">
             {tasks.map(task => (
-              <div key={task.id} className="contents">
+              <motion.div key={task.id} layout className="space-y-3">
                 {previewTaskId === task.id && <div className="task-drop-preview" aria-hidden />}
                 <TaskCard
                   task={task}
@@ -264,7 +264,7 @@ export const BoardColumn = ({
                   fullColor={fullColor}
                   lang={lang}
                 />
-              </div>
+              </motion.div>
             ))}
           </AnimatePresence>
         </SortableContext>

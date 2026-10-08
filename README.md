@@ -24,7 +24,11 @@ Tiny Board is local by design. It does not require an account or backend, and ta
 
 ## Releases
 
-- **v1.15.0 (Current Release)**:
+- **v1.16.0 (Current Release)**:
+  - Fixed task spacing and animated cards below the live insertion preview.
+  - Preserved rounded glass styling on the column drag overlay.
+
+- **v1.15.0**:
   - Added a live insertion preview when dragging tasks between cards.
 
 - **v1.14.0**:

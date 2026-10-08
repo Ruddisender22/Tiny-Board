@@ -778,7 +778,7 @@ export const Whiteboard = () => {
               const activeCategory = categories.find((category) => category.id === activeId);
               if (activeCategory) {
                 return (
-                  <div className="column-drag-preview board-column" style={{ width: columnWidths[activeCategory.id] ?? DEFAULT_COLUMN_WIDTH }}>
+                  <div className="column-drag-preview board-column overflow-hidden rounded-2xl" style={{ width: columnWidths[activeCategory.id] ?? DEFAULT_COLUMN_WIDTH }}>
                     <div className="board-column-header flex items-center rounded-t-2xl border-b p-4">
                       <div className="category-name-bar w-full truncate px-3 py-2 font-semibold" style={{ backgroundColor: colorVar(activeCategory.color) }}>
                         {activeCategory.name}
