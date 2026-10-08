@@ -2,7 +2,7 @@ import { useSortable, SortableContext, verticalListSortingStrategy } from "@dnd-
 import { CSS } from "@dnd-kit/utilities";
 import { TaskCard, Task } from "./TaskCard";
 import { TaskColor, colorVar } from "@/lib/taskColors";
-import { GripVertical, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useState, useRef, useEffect, KeyboardEvent } from "react";
 import { ColorPicker } from "./ColorPicker";
 import { Lang, translations } from "@/lib/i18n";
@@ -158,8 +158,6 @@ export const BoardColumn = ({
         {...attributes}
         {...listeners}
       >
-        <GripVertical className="h-4 w-4 text-card-foreground/40 group-hover:text-card-foreground/70" />
-        
         <ColorPicker
           hue={category.color}
           onChange={(h) => onChangeCategoryColor(category.id, h)}
@@ -170,6 +168,7 @@ export const BoardColumn = ({
             <button
               type="button"
               aria-label={t.changeColor}
+              onPointerDown={(e) => e.stopPropagation()}
               onClick={(e) => e.stopPropagation()}
               className="h-6 w-8 rounded-md flex-shrink-0 border border-white/20 shadow-sm transition-transform hover:scale-105"
               style={{ backgroundColor: colorVar(category.color) }}
@@ -177,7 +176,7 @@ export const BoardColumn = ({
           }
         />
 
-        <div className="flex-1 min-w-0" onPointerDown={(e) => e.stopPropagation()}>
+        <div className="flex-1 min-w-0">
           {editing ? (
             <input
               ref={nameInputRef}
@@ -185,6 +184,7 @@ export const BoardColumn = ({
               onChange={(e) => setNameDraft(e.target.value)}
               onKeyDown={handleNameKey}
               onBlur={commitName}
+              onPointerDown={(e) => e.stopPropagation()}
               onClick={(e) => e.stopPropagation()}
               className="w-full bg-transparent font-semibold text-card-foreground outline-none border-b border-primary"
             />
@@ -215,6 +215,7 @@ export const BoardColumn = ({
             e.stopPropagation();
             onDeleteCategory(category.id);
           }}
+          onPointerDown={(e) => e.stopPropagation()}
           aria-label={`Delete ${category.name}`}
           className="text-card-foreground/40 hover:text-destructive hover:bg-destructive/10 rounded-full p-1.5 transition-colors opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
         >
