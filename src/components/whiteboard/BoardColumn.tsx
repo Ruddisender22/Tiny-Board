@@ -251,6 +251,7 @@ export const BoardColumn = ({
       {/* Column Body */}
       <div className={cn(
         "board-column-body flex flex-col gap-3 p-3",
+        tasks.length === 0 && "board-column-empty-body",
         isSingleColumn && "board-column-single-body"
       )} onPointerDown={(e) => e.stopPropagation()}>
         <SortableContext items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>

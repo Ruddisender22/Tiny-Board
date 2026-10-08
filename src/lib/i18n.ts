@@ -54,6 +54,13 @@ export const translations = {
     deleteAllConfirm: "Delete all tasks? This cannot be undone.",
     changelogEntries: [
       {
+        version: "1.22.0",
+        changes: [
+          "Collapsed empty columns to a compact header-only layout",
+          "Moved pending task creation to the top while keeping category targets visible below",
+        ],
+      },
+      {
         version: "1.21.0",
         changes: [
           "Smoothed freeform column dragging with live transform movement",
@@ -278,6 +285,13 @@ export const translations = {
     deleteAll: "Eliminar todo",
     deleteAllConfirm: "¿Eliminar todas las tareas? Esto no se puede deshacer.",
     changelogEntries: [
+      {
+        version: "1.22.0",
+        changes: [
+          "Las columnas vacías ahora se reducen a una cabecera compacta",
+          "La creación pendiente aparece arriba y mantiene visibles las categorías debajo",
+        ],
+      },
       {
         version: "1.21.0",
         changes: [

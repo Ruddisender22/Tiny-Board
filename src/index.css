@@ -280,6 +280,11 @@
   .board-column-body {
     min-height: 180px;
   }
+  .board-column-empty-body {
+    min-height: 12px;
+    padding-top: 0.35rem;
+    padding-bottom: 0.35rem;
+  }
   .aurora-footer {
     position: fixed;
     z-index: 1;
