@@ -1,4 +1,5 @@
-import { useDraggable, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { useDraggable } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { TaskCard, Task } from "./TaskCard";
 import { TaskColor, colorVar, colorVarSoft } from "@/lib/taskColors";
