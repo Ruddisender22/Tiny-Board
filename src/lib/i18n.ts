@@ -54,6 +54,14 @@ export const translations = {
     deleteAllConfirm: "Delete all tasks? This cannot be undone.",
     changelogEntries: [
       {
+        version: "1.13.0",
+        changes: [
+          "Column drag overlay keeps destination columns visible during swaps",
+          "Card previews resize smoothly from pointer-based column detection",
+          "Moved the Made by credit below the board and added horizontal category color bars",
+        ],
+      },
+      {
         version: "1.12.0",
         changes: [
           "Single-category boards now use a clean flat layout without a column frame",
@@ -211,6 +219,14 @@ export const translations = {
     deleteAll: "Eliminar todo",
     deleteAllConfirm: "¿Eliminar todas las tareas? Esto no se puede deshacer.",
     changelogEntries: [
+      {
+        version: "1.13.0",
+        changes: [
+          "El overlay de arrastre mantiene visibles las columnas de destino durante los intercambios",
+          "Las previews de tarjetas cambian de tamaño suavemente detectando la columna bajo el puntero",
+          "El crédito Made by pasa debajo del tablero y las categorías usan barras horizontales de color",
+        ],
+      },
       {
         version: "1.12.0",
         changes: [

@@ -1,7 +1,7 @@
 import { useSortable, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { TaskCard, Task } from "./TaskCard";
-import { TaskColor, colorVar } from "@/lib/taskColors";
+import { TaskColor, colorVar, colorVarSoft } from "@/lib/taskColors";
 import { X } from "lucide-react";
 import { useState, useRef, useEffect, KeyboardEvent } from "react";
 import { ColorPicker } from "./ColorPicker";
@@ -21,6 +21,7 @@ interface BoardColumnProps {
   dropTarget: boolean;
   swapPulse: boolean;
   isSingleColumn: boolean;
+  dataCategoryId: string;
   width: number;
   minWidth: number;
   maxWidth: number;
@@ -49,6 +50,7 @@ export const BoardColumn = ({
   dropTarget,
   swapPulse,
   isSingleColumn,
+  dataCategoryId,
   width,
   minWidth,
   maxWidth,
@@ -139,12 +141,13 @@ export const BoardColumn = ({
   return (
     <motion.div
       ref={setNodeRef}
+      data-category-id={dataCategoryId}
       layout={!isDragging}
       style={{ ...style, width: isSingleColumn ? "100%" : width, minWidth: isSingleColumn ? 0 : minWidth }}
       className={cn(
         "board-column relative flex flex-col rounded-2xl max-h-[80vh] flex-shrink-0 transition-[box-shadow,border-color]",
         isSingleColumn && "board-column-single",
-        isDragging && "z-50 opacity-100",
+        isDragging && "z-50 opacity-0",
         dropTarget && !isDragging && "category-drop-glow",
         swapPulse && "category-swap-pulse",
         selectionMode && "category-selection-glow relative z-50 cursor-pointer"
@@ -176,7 +179,10 @@ export const BoardColumn = ({
           }
         />
 
-        <div className="flex-1 min-w-0">
+        <div
+          className="category-name-bar flex-1 min-w-0 truncate rounded-lg px-3 py-2"
+          style={{ backgroundColor: colorVarSoft(category.color, 0.22) }}
+        >
           {editing ? (
             <input
               ref={nameInputRef}

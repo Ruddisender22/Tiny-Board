@@ -9,6 +9,7 @@ import {
   useSensors,
   DragEndEvent,
   DragOverEvent,
+  DragMoveEvent,
   DragStartEvent,
   DragOverlay,
   TouchSensor,
@@ -21,7 +22,7 @@ import { Github, X, HelpCircle, Settings, Sun, Moon, Cloud, Trash2 } from "lucid
 import { TaskCard, Task } from "./TaskCard";
 import { BoardColumn, Category } from "./BoardColumn";
 import { CreateTaskFrame, CreateTaskFrameHandle } from "./CreateTaskFrame";
-import { TaskColor, DEFAULT_HUE } from "@/lib/taskColors";
+import { TaskColor, DEFAULT_HUE, colorVar } from "@/lib/taskColors";
 import {
   translations,
   Lang,
@@ -576,10 +577,18 @@ export const Whiteboard = () => {
       : tasks.find((task) => task.id === over.id)?.categoryId ?? null;
     if (categories.some((category) => category.id === active.id)) {
       setDropTargetCategoryId(targetCategoryId === active.id ? null : targetCategoryId);
-    } else {
-      setDropTargetCategoryId(null);
-      setDragPreviewCategoryId(targetCategoryId);
     }
+  };
+
+  const handleDragMove = (event: DragMoveEvent) => {
+    if (categories.some((category) => category.id === event.active.id)) return;
+    const translated = event.active.rect.current.translated;
+    if (!translated) return;
+    const centerX = translated.left + translated.width / 2;
+    const centerY = translated.top + translated.height / 2;
+    const element = document.elementFromPoint(centerX, centerY);
+    const categoryElement = element?.closest<HTMLElement>("[data-category-id]");
+    setDragPreviewCategoryId(categoryElement?.dataset.categoryId ?? null);
   };
 
   const handleBoardMouseMove = (event: React.MouseEvent) => {
@@ -683,7 +692,7 @@ export const Whiteboard = () => {
         </div>
 
         <DndContext sensors={sensors} collisionDetection={closestCenter}
-          onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd}
+          onDragStart={handleDragStart} onDragMove={handleDragMove} onDragOver={handleDragOver} onDragEnd={handleDragEnd}
           onDragCancel={() => { setActiveId(null); setDropTargetCategoryId(null); setDragPreviewCategoryId(null); setSwappedCategoryId(null); }}
         >
           {pendingTask && (
@@ -728,6 +737,7 @@ export const Whiteboard = () => {
               {categories.map((category) => (
                 <BoardColumn
                   key={category.id}
+                  dataCategoryId={category.id}
                   category={category}
                   dropTarget={dropTargetCategoryId === category.id}
                   swapPulse={swappedCategoryId === category.id}
@@ -756,6 +766,19 @@ export const Whiteboard = () => {
           </SortableContext>
           <DragOverlay dropAnimation={{ duration: 200, easing: "cubic-bezier(0.18, 0.67, 0.6, 1.22)" }}>
             {activeId ? (() => {
+              const activeCategory = categories.find((category) => category.id === activeId);
+              if (activeCategory) {
+                return (
+                  <div className="column-drag-preview board-column" style={{ width: columnWidths[activeCategory.id] ?? DEFAULT_COLUMN_WIDTH }}>
+                    <div className="board-column-header flex items-center rounded-t-2xl border-b p-4">
+                      <div className="category-name-bar w-full truncate px-3 py-2 font-semibold" style={{ backgroundColor: colorVar(activeCategory.color) }}>
+                        {activeCategory.name}
+                      </div>
+                    </div>
+                    <div className="min-h-[180px] p-3" />
+                  </div>
+                );
+              }
               const t = tasks.find((x) => x.id === activeId);
               if (!t) return null;
               const previewWidth = columnWidths[dragPreviewCategoryId ?? t.categoryId] ?? DEFAULT_COLUMN_WIDTH;
@@ -917,9 +940,9 @@ export const Whiteboard = () => {
       )}
     </AnimatePresence>
 
-    <footer className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 text-xs pointer-events-none">
+    <footer className="mx-auto mt-8 flex w-full justify-center pb-8 text-xs">
       <a href={`https://github.com/${GITHUB_USER}`} target="_blank" rel="noopener noreferrer"
-        className="inline-flex items-center justify-center gap-1.5 rounded-full bg-card/80 backdrop-blur w-8 h-8 sm:w-auto sm:h-auto sm:px-3 sm:py-1.5 border border-border text-card-foreground/70 hover:text-card-foreground hover:bg-card transition-colors pointer-events-auto"
+        className="inline-flex items-center justify-center gap-1.5 rounded-full bg-card/80 px-3 py-1.5 backdrop-blur border border-border text-card-foreground/70 hover:text-card-foreground hover:bg-card transition-colors"
         onClick={(e) => e.stopPropagation()}
         title={`${t.madeBy} @${GITHUB_USER}`}
       >

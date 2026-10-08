@@ -20,7 +20,12 @@ Everything saves to your browser automatically.
 
 ## Releases
 
-- **v1.12.0 (Current Release)**:
+- **v1.13.0 (Current Release)**:
+  - Added a column drag overlay so destination columns stay visible during swaps.
+  - Card previews resize smoothly using pointer-based column detection.
+  - Moved the Made by credit below the board and added horizontal category color bars.
+
+- **v1.12.0**:
   - Single-category boards now use a clean flat layout without a column frame.
 
 - **v1.11.0**:
