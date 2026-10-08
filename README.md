@@ -24,7 +24,14 @@ Tiny Board is local by design. It does not require an account or backend, and ta
 
 ## Releases
 
-- **v1.13.0 (Current Release)**:
+- **v1.15.0 (Current Release)**:
+  - Added a live insertion preview when dragging tasks between cards.
+
+- **v1.14.0**:
+  - Redesigned Add category and compacted the Create task area.
+  - Centered the floating task preview and category selection message.
+
+- **v1.13.0**:
   - Added a column drag overlay so destination columns stay visible during swaps.
   - Card previews resize smoothly using pointer-based column detection.
   - Moved the Made by credit below the board and added horizontal category color bars.

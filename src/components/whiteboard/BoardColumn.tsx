@@ -28,6 +28,7 @@ interface BoardColumnProps {
   onResize: (id: string, width: number) => void;
   selectionMode: boolean;
   onSelectCategory: (id: string) => void;
+  previewTaskId: string | null;
   onRenameCategory: (id: string, newName: string) => void;
   onDeleteCategory: (id: string) => void;
   onChangeCategoryColor: (id: string, color: TaskColor) => void;
@@ -57,6 +58,7 @@ export const BoardColumn = ({
   onResize,
   selectionMode,
   onSelectCategory,
+  previewTaskId,
   onRenameCategory,
   onDeleteCategory,
   onChangeCategoryColor,
@@ -249,18 +251,20 @@ export const BoardColumn = ({
         <SortableContext items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
           <AnimatePresence initial={false} mode="popLayout">
             {tasks.map(task => (
-              <TaskCard 
-                key={task.id}
-                task={task}
-                onToggle={onToggleTask}
-                onDelete={onDeleteTask}
-                onRename={onRenameTask}
-                onAddTag={onAddTag}
-                onRemoveTag={onRemoveTag}
-                onChangeColor={onChangeTaskColor}
-                fullColor={fullColor}
-                lang={lang}
-              />
+              <div key={task.id} className="contents">
+                {previewTaskId === task.id && <div className="task-drop-preview" aria-hidden />}
+                <TaskCard
+                  task={task}
+                  onToggle={onToggleTask}
+                  onDelete={onDeleteTask}
+                  onRename={onRenameTask}
+                  onAddTag={onAddTag}
+                  onRemoveTag={onRemoveTag}
+                  onChangeColor={onChangeTaskColor}
+                  fullColor={fullColor}
+                  lang={lang}
+                />
+              </div>
             ))}
           </AnimatePresence>
         </SortableContext>

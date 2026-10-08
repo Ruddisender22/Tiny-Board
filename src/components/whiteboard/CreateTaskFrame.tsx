@@ -191,12 +191,12 @@ export const CreateTaskFrame = forwardRef<CreateTaskFrameHandle, CreateTaskFrame
               onActivate();
             }}
             className={cn(
-              "flex w-full items-center gap-3 rounded-2xl border-2 transition-all duration-300",
+              "flex w-full items-center gap-3 rounded-xl border transition-all duration-300",
               isStuck
                 // Floating at bottom: solid, larger, prominent shadow
-                ? "bg-card border-border shadow-lg px-6 py-5 text-card-foreground/70 hover:border-card-foreground/30 hover:text-card-foreground hover:shadow-xl"
+                ? "bg-card border-border shadow-lg px-4 py-3 text-card-foreground/70 hover:border-card-foreground/30 hover:text-card-foreground hover:shadow-xl"
                 // In-flow below last task: translucent, dashed border
-                : "bg-card/40 backdrop-blur-sm border-dashed border-border/60 px-5 py-4 text-card-foreground/50 hover:bg-card/70 hover:border-card-foreground/40 hover:text-card-foreground"
+                : "bg-card/40 backdrop-blur-sm border-dashed border-border/60 px-4 py-2.5 text-card-foreground/50 hover:bg-card/70 hover:border-card-foreground/40 hover:text-card-foreground"
             )}
           >
             <Plus className="h-4 w-4 flex-shrink-0" />

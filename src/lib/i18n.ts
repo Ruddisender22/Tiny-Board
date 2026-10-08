@@ -54,6 +54,19 @@ export const translations = {
     deleteAllConfirm: "Delete all tasks? This cannot be undone.",
     changelogEntries: [
       {
+        version: "1.15.0",
+        changes: [
+          "Added a live insertion preview when dragging tasks between cards",
+        ],
+      },
+      {
+        version: "1.14.0",
+        changes: [
+          "Redesigned Add category and compacted the Create task action area",
+          "Centered the floating task preview and category selection message",
+        ],
+      },
+      {
         version: "1.13.0",
         changes: [
           "Column drag overlay keeps destination columns visible during swaps",
@@ -219,6 +232,19 @@ export const translations = {
     deleteAll: "Eliminar todo",
     deleteAllConfirm: "¿Eliminar todas las tareas? Esto no se puede deshacer.",
     changelogEntries: [
+      {
+        version: "1.15.0",
+        changes: [
+          "Añadida una preview de inserción en tiempo real al mover tareas entre tarjetas",
+        ],
+      },
+      {
+        version: "1.14.0",
+        changes: [
+          "Rediseñado Añadir categoría y compactada la zona de Crear tarea",
+          "Centrada la preview flotante y el mensaje de selección de categoría",
+        ],
+      },
       {
         version: "1.13.0",
         changes: [

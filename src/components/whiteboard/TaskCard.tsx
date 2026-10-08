@@ -129,6 +129,7 @@ export const TaskCard = ({
   return (
     <motion.div
       ref={setNodeRef}
+      data-task-id={task.id}
       layout
       initial={{ opacity: 0, y: -8, scale: 0.98 }}
       animate={{

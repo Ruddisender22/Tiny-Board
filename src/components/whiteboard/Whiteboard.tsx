@@ -18,7 +18,7 @@ import {
   SortableContext,
   horizontalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { Github, X, HelpCircle, Settings, Sun, Moon, Cloud, Trash2 } from "lucide-react";
+import { Github, X, HelpCircle, Settings, Sun, Moon, Cloud, Trash2, FolderPlus } from "lucide-react";
 import { TaskCard, Task } from "./TaskCard";
 import { BoardColumn, Category } from "./BoardColumn";
 import { CreateTaskFrame, CreateTaskFrameHandle } from "./CreateTaskFrame";
@@ -331,6 +331,7 @@ export const Whiteboard = () => {
   const [pendingTask, setPendingTask] = useState<{ name: string; color: TaskColor; tags: string[] } | null>(null);
   const [swappedCategoryId, setSwappedCategoryId] = useState<string | null>(null);
   const [dragPreviewCategoryId, setDragPreviewCategoryId] = useState<string | null>(null);
+  const [dragPreviewTaskId, setDragPreviewTaskId] = useState<string | null>(null);
   const [filterTag, setFilterTag] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [helpOpen, setHelpOpen] = useState(false);
@@ -519,6 +520,7 @@ export const Whiteboard = () => {
     setActiveId(null);
     setDropTargetCategoryId(null);
     setDragPreviewCategoryId(null);
+    setDragPreviewTaskId(null);
     if (!over || active.id === over.id) return;
 
     if (categories.some((category) => category.id === active.id)) {
@@ -563,6 +565,7 @@ export const Whiteboard = () => {
     setSwappedCategoryId(null);
     const activeTask = tasks.find((task) => task.id === event.active.id);
     setDragPreviewCategoryId(activeTask?.categoryId ?? null);
+    setDragPreviewTaskId(null);
   };
 
   const handleDragOver = (event: DragOverEvent) => {
@@ -588,7 +591,9 @@ export const Whiteboard = () => {
     const centerY = translated.top + translated.height / 2;
     const element = document.elementFromPoint(centerX, centerY);
     const categoryElement = element?.closest<HTMLElement>("[data-category-id]");
+    const taskElement = element?.closest<HTMLElement>("[data-task-id]");
     setDragPreviewCategoryId(categoryElement?.dataset.categoryId ?? null);
+    setDragPreviewTaskId(taskElement?.dataset.taskId === String(event.active.id) ? null : taskElement?.dataset.taskId ?? null);
   };
 
   const handleBoardMouseMove = (event: React.MouseEvent) => {
@@ -634,7 +639,7 @@ export const Whiteboard = () => {
       className="relative min-h-screen w-full px-4 py-12 sm:py-20 pb-32"
     >
       <div className="mx-auto w-full max-w-[1440px]">
-        <header className="mb-7 flex flex-col gap-5 border-b border-border/50 pb-5 md:flex-row md:items-end md:justify-between">
+        <header className="mb-4 flex flex-col gap-3 border-b border-border/50 pb-4 md:flex-row md:items-end md:justify-between">
           <div>
             <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">{t.title}</h1>
             <p className="mt-1.5 text-sm text-muted-foreground">{t.subtitle}</p>
@@ -656,7 +661,7 @@ export const Whiteboard = () => {
 
         {/* Tag filter bar */}
         {allTags.length > 0 && (
-          <div className="mb-5 flex items-center gap-2 flex-wrap">
+          <div className="mb-3 flex items-center gap-2 flex-wrap">
             <span className="text-xs text-muted-foreground/60 mr-1">{t.tags}</span>
             {allTags.map((tag) => (
               <button key={tag} type="button"
@@ -677,7 +682,7 @@ export const Whiteboard = () => {
           </div>
         )}
 
-        <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="mb-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground/70">{t.categories}</span>
             <span className="text-xs text-muted-foreground/50">{categories.length}</span>
@@ -685,15 +690,16 @@ export const Whiteboard = () => {
           <button
             type="button"
             onClick={addCategory}
-            className="inline-flex items-center rounded-full border border-border bg-card/70 px-3 py-1.5 text-xs font-medium text-card-foreground/70 shadow-sm backdrop-blur transition-colors hover:bg-card hover:text-card-foreground"
+            className="group inline-flex items-center gap-2 rounded-xl border border-primary/25 bg-primary/[0.08] px-3 py-2 text-xs font-semibold text-primary shadow-sm backdrop-blur transition-all hover:border-primary/50 hover:bg-primary/[0.14] hover:shadow-md"
           >
-            + {t.addCategory}
+            <FolderPlus className="h-4 w-4 transition-transform group-hover:-translate-y-0.5" />
+            <span>{t.addCategory}</span>
           </button>
         </div>
 
         <DndContext sensors={sensors} collisionDetection={closestCenter}
           onDragStart={handleDragStart} onDragMove={handleDragMove} onDragOver={handleDragOver} onDragEnd={handleDragEnd}
-          onDragCancel={() => { setActiveId(null); setDropTargetCategoryId(null); setDragPreviewCategoryId(null); setSwappedCategoryId(null); }}
+          onDragCancel={() => { setActiveId(null); setDropTargetCategoryId(null); setDragPreviewCategoryId(null); setDragPreviewTaskId(null); setSwappedCategoryId(null); }}
         >
           {pendingTask && (
             <>
@@ -703,13 +709,14 @@ export const Whiteboard = () => {
                 onClick={() => setPendingTask(null)}
               />
               <motion.div
-                className="pointer-events-none fixed left-1/2 top-24 z-[60] w-[min(420px,calc(100vw-2rem))] -translate-x-1/2"
+                className="pointer-events-none fixed inset-0 z-[60] flex items-center justify-center px-4"
                 initial={{ opacity: 0, y: -12, scale: 0.94 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -12, scale: 0.94 }}
               >
-                <p className="mb-2 text-center text-xs font-medium text-foreground/80">{t.chooseCategory}</p>
-                <TaskCard
+                <div className="w-[min(420px,calc(100vw-2rem))]">
+                  <p className="mb-2 text-center text-xs font-medium text-foreground/80">{t.chooseCategory}</p>
+                  <TaskCard
                   task={{ id: "pending-create", name: pendingTask.name, color: pendingTask.color, completed: false, tags: pendingTask.tags, categoryId: "" }}
                   onToggle={() => {}}
                   onDelete={() => {}}
@@ -719,12 +726,13 @@ export const Whiteboard = () => {
                   onChangeColor={() => {}}
                   overlay
                   fullColor={fullColor}
-                  lang={lang}
-                />
+                    lang={lang}
+                  />
+                </div>
               </motion.div>
             </>
           )}
-          <div ref={createAnchorRef} className="mx-auto mb-5 min-h-[72px] w-full max-w-2xl">
+          <div ref={createAnchorRef} className="mx-auto mb-3 min-h-[52px] w-full max-w-2xl">
             {showCreateFrame && (
               <CreateTaskFrame ref={frameRef} visible={showCreateFrame} active={creating}
                 onActivate={() => setCreating(true)} onSubmit={addTask} onCancel={() => setCreating(false)}
@@ -752,6 +760,7 @@ export const Whiteboard = () => {
                   onChangeCategoryColor={changeCategoryColor}
                   selectionMode={Boolean(pendingTask)}
                   onSelectCategory={selectCategoryForPendingTask}
+                  previewTaskId={dragPreviewCategoryId === category.id ? dragPreviewTaskId : null}
                   onToggleTask={toggleTask}
                   onDeleteTask={deleteTask}
                   onRenameTask={renameTask}
