@@ -707,8 +707,8 @@ export const Whiteboard = () => {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -12, scale: 0.94 }}
               >
-                <div className="w-[min(420px,calc(100vw-2rem))]">
-                  <p className="mb-2 text-center text-xs font-medium text-foreground/80">{t.chooseCategory}</p>
+                <div className="flex w-[min(420px,calc(100vw-2rem))] flex-col items-center gap-3">
+                  <p className="pending-task-message rounded-full border border-primary/25 bg-card/90 px-4 py-2 text-center text-xs font-semibold text-card-foreground shadow-lg backdrop-blur-xl">{t.chooseCategory}</p>
                   <TaskCard
                   task={{ id: "pending-create", name: pendingTask.name, color: pendingTask.color, completed: false, tags: pendingTask.tags, categoryId: "" }}
                   onToggle={() => {}}
@@ -737,7 +737,7 @@ export const Whiteboard = () => {
             <button
               type="button"
               onClick={addCategory}
-              className="group inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-primary/25 bg-primary/[0.08] px-4 py-2.5 text-xs font-semibold text-primary shadow-sm backdrop-blur transition-all hover:border-primary/50 hover:bg-primary/[0.14] hover:shadow-md"
+              className="group inline-flex h-12 min-w-[148px] shrink-0 items-center justify-center gap-2 rounded-xl border border-primary/30 bg-primary/[0.1] px-5 text-xs font-semibold text-primary shadow-sm backdrop-blur transition-all hover:border-primary/60 hover:bg-primary/[0.16] hover:shadow-md"
             >
               <FolderPlus className="h-4 w-4 transition-transform group-hover:-translate-y-0.5" />
               <span>{t.addCategory}</span>

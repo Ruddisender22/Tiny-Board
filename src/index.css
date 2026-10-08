@@ -199,35 +199,37 @@
     right: 0;
     bottom: 0;
     left: 0;
-    height: 120px;
+    height: 92px;
     overflow: hidden;
     pointer-events: none;
-    opacity: 0.5;
-    background: linear-gradient(180deg, transparent 0%, hsl(var(--foreground) / 0.025) 100%);
+    opacity: 0.55;
+    background: linear-gradient(180deg, transparent 0%, hsl(var(--foreground) / 0.018) 100%);
   }
 
   .aurora-footer::before,
   .aurora-footer::after {
     position: absolute;
     right: -10%;
-    bottom: -62px;
-    left: -10%;
-    height: 150px;
+    bottom: -35px;
+    left: -18%;
+    height: 90px;
     content: "";
-    filter: blur(18px);
-    opacity: 0.3;
+    filter: none;
+    opacity: 0.32;
     transform: rotate(-3deg) translateX(-4%);
-    background: linear-gradient(100deg, transparent 8%, hsl(var(--foreground) / 0.4) 32%, transparent 52%, hsl(var(--foreground) / 0.22) 75%, transparent 92%);
-    animation: aurora-drift 12s ease-in-out infinite alternate;
+    background-image: radial-gradient(circle, hsl(var(--foreground) / 0.5) 0 1px, transparent 1.5px), radial-gradient(circle, hsl(var(--foreground) / 0.32) 0 1px, transparent 1.5px), radial-gradient(circle, hsl(var(--foreground) / 0.22) 0 0.8px, transparent 1.3px);
+    background-size: 31px 24px, 53px 37px, 79px 51px;
+    animation: sand-drift 10s linear infinite;
   }
 
   .aurora-footer::after {
-    bottom: -76px;
-    opacity: 0.2;
-    transform: rotate(4deg) translateX(5%);
-    background: linear-gradient(80deg, transparent 12%, hsl(var(--foreground) / 0.26) 38%, transparent 58%, hsl(var(--foreground) / 0.34) 82%, transparent 96%);
-    animation-delay: -5s;
-    animation-duration: 16s;
+    bottom: -48px;
+    opacity: 0.22;
+    transform: rotate(3deg) translateX(5%);
+    background-image: radial-gradient(circle, hsl(var(--foreground) / 0.34) 0 1px, transparent 1.5px), radial-gradient(circle, hsl(var(--foreground) / 0.2) 0 0.8px, transparent 1.3px);
+    background-size: 43px 29px, 71px 47px;
+    animation-delay: -4s;
+    animation-duration: 15s;
   }
   .full-color-card {
     --card-foreground: var(--foreground);
@@ -302,9 +304,9 @@
     to { opacity: 1; transform: scaleY(1); }
   }
 
-  @keyframes aurora-drift {
-    from { transform: rotate(-3deg) translateX(-6%); }
-    to { transform: rotate(-3deg) translateX(6%); }
+  @keyframes sand-drift {
+    from { background-position: 0 0, 18px 7px, -24px 12px; transform: rotate(-3deg) translateX(-8%); }
+    to { background-position: 120px -4px, -80px 14px, 105px 4px; transform: rotate(-3deg) translateX(8%); }
   }
 
   @keyframes category-glow {

@@ -54,6 +54,14 @@ export const translations = {
     deleteAllConfirm: "Delete all tasks? This cannot be undone.",
     changelogEntries: [
       {
+        version: "1.18.0",
+        changes: [
+          "Redesigned the category-selection overlay to prevent task/message overlap",
+          "Improved Add category proportions",
+          "Replaced the bottom haze with subtle windblown monochrome sand particles",
+        ],
+      },
+      {
         version: "1.17.0",
         changes: [
           "Improved Mixed theme column contrast",
@@ -248,6 +256,14 @@ export const translations = {
     deleteAll: "Eliminar todo",
     deleteAllConfirm: "¿Eliminar todas las tareas? Esto no se puede deshacer.",
     changelogEntries: [
+      {
+        version: "1.18.0",
+        changes: [
+          "Rediseñado el overlay de selección para evitar solapamientos entre tarjeta y mensaje",
+          "Mejoradas las proporciones de Añadir categoría",
+          "Sustituida la niebla inferior por partículas monocromas de arena movidas por el viento",
+        ],
+      },
       {
         version: "1.17.0",
         changes: [
