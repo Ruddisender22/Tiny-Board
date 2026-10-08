@@ -4,7 +4,7 @@ import { Plus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TaskColor, DEFAULT_HUE, colorVar } from "@/lib/taskColors";
 import { Lang, translations } from "@/lib/i18n";
-import { HueSlider } from "./HueSlider";
+import { ColorPicker } from "./ColorPicker";
 
 interface CreateTaskFrameProps {
   visible: boolean;
@@ -152,7 +152,21 @@ export const CreateTaskFrame = forwardRef<CreateTaskFrameHandle, CreateTaskFrame
             />
             <div className="ml-auto flex items-center gap-2">
               <span className="text-xs text-card-foreground/60">{t.color}</span>
-              <HueSlider hue={color} onChange={setColor} />
+              <ColorPicker
+                hue={color}
+                onChange={setColor}
+                recentLabel={t.recentColors}
+                sliderLabel={t.customColor}
+                colorLabel={t.color}
+                trigger={
+                  <button
+                    type="button"
+                    aria-label={t.changeColor}
+                    className="h-4 w-4 rounded-full border border-white/30 shadow-sm transition-transform hover:scale-110"
+                    style={{ backgroundColor: colorVar(color) }}
+                  />
+                }
+              />
             </div>
           </div>
         </motion.div>

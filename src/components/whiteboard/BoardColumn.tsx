@@ -4,8 +4,7 @@ import { TaskCard, Task } from "./TaskCard";
 import { TaskColor, colorVar } from "@/lib/taskColors";
 import { GripVertical, X, Plus } from "lucide-react";
 import { useState, useRef, useEffect, KeyboardEvent } from "react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { HueSlider } from "./HueSlider";
+import { ColorPicker } from "./ColorPicker";
 import { Lang, translations } from "@/lib/i18n";
 import { cn, useIsTouchDevice } from "@/lib/utils";
 import { AnimatePresence } from "framer-motion";
@@ -123,20 +122,22 @@ export const BoardColumn = ({
       >
         <GripVertical className="h-4 w-4 text-card-foreground/40 group-hover:text-card-foreground/70" />
         
-        <Popover>
-          <PopoverTrigger asChild>
+        <ColorPicker
+          hue={category.color}
+          onChange={(h) => onChangeCategoryColor(category.id, h)}
+          recentLabel={t.recentColors}
+          sliderLabel={t.customColor}
+          colorLabel={t.color}
+          trigger={
             <button
               type="button"
-              aria-label="Change color"
+              aria-label={t.changeColor}
               onClick={(e) => e.stopPropagation()}
               className="h-3 w-3 rounded-full flex-shrink-0 transition-transform hover:scale-125"
               style={{ backgroundColor: colorVar(category.color) }}
             />
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-3" onClick={(e) => e.stopPropagation()}>
-            <HueSlider hue={category.color} onChange={(h) => onChangeCategoryColor(category.id, h)} />
-          </PopoverContent>
-        </Popover>
+          }
+        />
 
         <div className="flex-1 min-w-0" onPointerDown={(e) => e.stopPropagation()}>
           {editing ? (

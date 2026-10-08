@@ -6,8 +6,7 @@ import { useState, useRef, useEffect, useCallback, KeyboardEvent } from "react";
 import { cn, useIsTouchDevice } from "@/lib/utils";
 import { colorVar, colorVarSoft, TaskColor } from "@/lib/taskColors";
 import { Lang, translations } from "@/lib/i18n";
-import { HueSlider } from "./HueSlider";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ColorPicker } from "./ColorPicker";
 
 export interface Task {
   id: string;
@@ -189,26 +188,22 @@ export const TaskCard = ({
       </button>
 
       {/* Color dot — popover to change color */}
-      <Popover>
-        <PopoverTrigger asChild>
+      <ColorPicker
+        hue={task.color}
+        onChange={(h) => onChangeColor(task.id, h)}
+        recentLabel={t.recentColors}
+        sliderLabel={t.customColor}
+        colorLabel={t.color}
+        trigger={
           <button
             type="button"
-            aria-label="Change color"
+            aria-label={t.changeColor}
             onClick={(e) => e.stopPropagation()}
             className="h-2.5 w-2.5 rounded-full flex-shrink-0 transition-transform hover:scale-125"
             style={{ backgroundColor: colorVar(task.color) }}
           />
-        </PopoverTrigger>
-        <PopoverContent
-          className="w-auto p-3"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <HueSlider
-            hue={task.color}
-            onChange={(h) => onChangeColor(task.id, h)}
-          />
-        </PopoverContent>
-      </Popover>
+        }
+      />
 
       {/* Task name + tags */}
       <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
