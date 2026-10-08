@@ -24,7 +24,13 @@ Tiny Board is local by design. It does not require an account or backend, and ta
 
 ## Releases
 
-- **v1.16.0 (Current Release)**:
+- **v1.17.0 (Current Release)**:
+  - Improved Mixed theme column contrast.
+  - Added a subtle animated monochrome aurora at the bottom of the board.
+  - Placed Add category beside the compact Create task action.
+  - Fixed column wheel scrolling for long task lists.
+
+- **v1.16.0**:
   - Fixed task spacing and animated cards below the live insertion preview.
   - Preserved rounded glass styling on the column drag overlay.
 

@@ -74,9 +74,9 @@
 
     --skeleton-border: 220 14% 18%;
     --task-shadow: 220 14% 6%;
-    --column-bg: 220 22% 18%;
-    --column-border: 220 20% 31%;
-    --column-header: 220 22% 23%;
+    --column-bg: 220 18% 22%;
+    --column-border: 220 18% 40%;
+    --column-header: 220 18% 29%;
   }
 
   /* Dark: everything dark */
@@ -159,6 +159,7 @@
     box-shadow: 0 2px 4px hsl(var(--task-shadow) / 0.1), 0 8px 24px hsl(var(--task-shadow) / 0.12);
   }
   .board-column {
+    height: min(80vh, 760px);
     background: hsl(var(--column-bg) / 0.82);
     border: 1px solid hsl(var(--column-border) / 0.9);
     box-shadow: 0 12px 30px hsl(var(--task-shadow) / 0.14), inset 0 1px 0 hsl(0 0% 100% / 0.08);
@@ -170,6 +171,7 @@
   }
   .board-column-single {
     width: 100%;
+    height: auto;
     max-width: 760px;
     max-height: none;
     margin-inline: auto;
@@ -187,6 +189,45 @@
     max-height: none;
     overflow: visible;
     padding-inline: 0;
+  }
+  .board-column-body {
+    min-height: 180px;
+  }
+  .aurora-footer {
+    position: fixed;
+    z-index: 1;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 120px;
+    overflow: hidden;
+    pointer-events: none;
+    opacity: 0.5;
+    background: linear-gradient(180deg, transparent 0%, hsl(var(--foreground) / 0.025) 100%);
+  }
+
+  .aurora-footer::before,
+  .aurora-footer::after {
+    position: absolute;
+    right: -10%;
+    bottom: -62px;
+    left: -10%;
+    height: 150px;
+    content: "";
+    filter: blur(18px);
+    opacity: 0.3;
+    transform: rotate(-3deg) translateX(-4%);
+    background: linear-gradient(100deg, transparent 8%, hsl(var(--foreground) / 0.4) 32%, transparent 52%, hsl(var(--foreground) / 0.22) 75%, transparent 92%);
+    animation: aurora-drift 12s ease-in-out infinite alternate;
+  }
+
+  .aurora-footer::after {
+    bottom: -76px;
+    opacity: 0.2;
+    transform: rotate(4deg) translateX(5%);
+    background: linear-gradient(80deg, transparent 12%, hsl(var(--foreground) / 0.26) 38%, transparent 58%, hsl(var(--foreground) / 0.34) 82%, transparent 96%);
+    animation-delay: -5s;
+    animation-duration: 16s;
   }
   .full-color-card {
     --card-foreground: var(--foreground);
@@ -259,6 +300,11 @@
   @keyframes task-drop-preview-in {
     from { opacity: 0; transform: scaleY(0.35); }
     to { opacity: 1; transform: scaleY(1); }
+  }
+
+  @keyframes aurora-drift {
+    from { transform: rotate(-3deg) translateX(-6%); }
+    to { transform: rotate(-3deg) translateX(6%); }
   }
 
   @keyframes category-glow {

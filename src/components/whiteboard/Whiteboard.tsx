@@ -633,10 +633,11 @@ export const Whiteboard = () => {
       onMouseMove={handleBoardMouseMove}
       className="relative min-h-screen w-full bg-background bg-dot-pattern"
     >
+    <div className="aurora-footer" aria-hidden="true" />
     <main
       ref={boardRef}
       onClick={handleBoardClick}
-      className="relative min-h-screen w-full px-4 py-12 sm:py-20 pb-32"
+      className="relative z-10 min-h-screen w-full px-4 py-12 sm:py-20 pb-32"
     >
       <div className="mx-auto w-full max-w-[1440px]">
         <header className="mb-4 flex flex-col gap-3 border-b border-border/50 pb-4 md:flex-row md:items-end md:justify-between">
@@ -682,19 +683,11 @@ export const Whiteboard = () => {
           </div>
         )}
 
-        <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="mb-3 flex items-center gap-3">
           <div className="flex items-center gap-3">
             <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground/70">{t.categories}</span>
             <span className="text-xs text-muted-foreground/50">{categories.length}</span>
           </div>
-          <button
-            type="button"
-            onClick={addCategory}
-            className="group inline-flex items-center gap-2 rounded-xl border border-primary/25 bg-primary/[0.08] px-3 py-2 text-xs font-semibold text-primary shadow-sm backdrop-blur transition-all hover:border-primary/50 hover:bg-primary/[0.14] hover:shadow-md"
-          >
-            <FolderPlus className="h-4 w-4 transition-transform group-hover:-translate-y-0.5" />
-            <span>{t.addCategory}</span>
-          </button>
         </div>
 
         <DndContext sensors={sensors} collisionDetection={closestCenter}
@@ -732,13 +725,23 @@ export const Whiteboard = () => {
               </motion.div>
             </>
           )}
-          <div ref={createAnchorRef} className="mx-auto mb-3 min-h-[52px] w-full max-w-2xl">
-            {showCreateFrame && (
-              <CreateTaskFrame ref={frameRef} visible={showCreateFrame} active={creating}
-                onActivate={() => setCreating(true)} onSubmit={addTask} onCancel={() => setCreating(false)}
-                lang={lang} isStuck={false}
-              />
-            )}
+          <div className="mx-auto mb-3 flex min-h-[52px] w-full max-w-2xl items-center gap-3">
+            <div ref={createAnchorRef} className="min-w-0 flex-1">
+              {showCreateFrame && (
+                <CreateTaskFrame ref={frameRef} visible={showCreateFrame} active={creating}
+                  onActivate={() => setCreating(true)} onSubmit={addTask} onCancel={() => setCreating(false)}
+                  lang={lang} isStuck={false}
+                />
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={addCategory}
+              className="group inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-primary/25 bg-primary/[0.08] px-4 py-2.5 text-xs font-semibold text-primary shadow-sm backdrop-blur transition-all hover:border-primary/50 hover:bg-primary/[0.14] hover:shadow-md"
+            >
+              <FolderPlus className="h-4 w-4 transition-transform group-hover:-translate-y-0.5" />
+              <span>{t.addCategory}</span>
+            </button>
           </div>
           <SortableContext items={categories.map((category) => category.id)} strategy={horizontalListSortingStrategy}>
             <div className="flex max-w-full items-stretch justify-center gap-4 overflow-x-auto pb-5 snap-x snap-mandatory">

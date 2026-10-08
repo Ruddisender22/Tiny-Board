@@ -245,7 +245,7 @@ export const BoardColumn = ({
       
       {/* Column Body */}
       <div className={cn(
-        "flex flex-col gap-3 flex-1 min-h-[180px] p-3 overflow-y-auto overscroll-contain kanban-scroll",
+        "board-column-body flex flex-col gap-3 flex-1 min-h-0 p-3 overflow-y-auto overscroll-contain kanban-scroll",
         isSingleColumn && "board-column-single-body"
       )} onPointerDown={(e) => e.stopPropagation()}>
         <SortableContext items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>

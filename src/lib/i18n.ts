@@ -54,6 +54,15 @@ export const translations = {
     deleteAllConfirm: "Delete all tasks? This cannot be undone.",
     changelogEntries: [
       {
+        version: "1.17.0",
+        changes: [
+          "Improved Mixed theme column contrast",
+          "Added a subtle animated monochrome aurora at the bottom of the board",
+          "Placed Add category beside the compact Create task action",
+          "Fixed column wheel scrolling for long task lists",
+        ],
+      },
+      {
         version: "1.16.0",
         changes: [
           "Fixed task spacing and animated cards below the live insertion preview",
@@ -239,6 +248,15 @@ export const translations = {
     deleteAll: "Eliminar todo",
     deleteAllConfirm: "¿Eliminar todas las tareas? Esto no se puede deshacer.",
     changelogEntries: [
+      {
+        version: "1.17.0",
+        changes: [
+          "Mejorado el contraste de columnas en el tema Mixto",
+          "Añadida una aurora monocromática animada y sutil al pie del tablero",
+          "Añadido Añadir categoría junto a la acción compacta Crear tarea",
+          "Corregido el scroll con rueda en columnas con muchas tareas",
+        ],
+      },
       {
         version: "1.16.0",
         changes: [
