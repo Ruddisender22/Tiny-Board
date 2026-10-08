@@ -308,12 +308,15 @@ export const Whiteboard = () => {
   const [helpOpen, setHelpOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
+  const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
+  const [categoryNameDraft, setCategoryNameDraft] = useState("");
   const [lang, setLang] = useState<Lang>(() => loadLang());
   const [theme, setTheme] = useState<Theme>(() => loadTheme());
   const [fullColor, setFullColor] = useState(() => loadFullColor());
   const [creatingCategoryId, setCreatingCategoryId] = useState(() => loadCategories()[0]?.id ?? DEFAULT_CATEGORY.id);
   const boardRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<CreateTaskFrameHandle>(null);
+  const categoryNameInputRef = useRef<HTMLInputElement>(null);
   const isTouch = useIsTouchDevice();
 
   const t = translations[lang];
@@ -326,6 +329,12 @@ export const Whiteboard = () => {
   const handleLangChange = (l: Lang) => { setLang(l); saveLang(l); };
   const handleThemeChange = (th: Theme) => { setTheme(th); saveTheme(th); };
   const handleFullColorChange = (v: boolean) => { setFullColor(v); saveFullColor(v); };
+
+  useEffect(() => {
+    if (categoryDialogOpen) {
+      requestAnimationFrame(() => categoryNameInputRef.current?.focus());
+    }
+  }, [categoryDialogOpen]);
 
 
 
@@ -386,8 +395,12 @@ export const Whiteboard = () => {
   }, [creatingCategoryId]);
 
   const addCategory = useCallback(() => {
-    const name = window.prompt(t.categoryNamePrompt);
-    const trimmed = name?.trim();
+    setCategoryNameDraft("");
+    setCategoryDialogOpen(true);
+  }, []);
+
+  const createCategory = useCallback(() => {
+    const trimmed = categoryNameDraft.trim();
     if (!trimmed) return;
     const category: Category = {
       id: crypto.randomUUID(),
@@ -396,7 +409,9 @@ export const Whiteboard = () => {
     };
     setCategories((prev) => [...prev, category]);
     setCreatingCategoryId(category.id);
-  }, [t.categoryNamePrompt]);
+    setCategoryNameDraft("");
+    setCategoryDialogOpen(false);
+  }, [categoryNameDraft]);
 
   const renameCategory = useCallback((id: string, name: string) => {
     setCategories((prev) => prev.map((category) => category.id === id ? { ...category, name } : category));
@@ -675,6 +690,74 @@ export const Whiteboard = () => {
       theme={theme} onThemeChange={handleThemeChange}
       fullColor={fullColor} onFullColorChange={handleFullColorChange}
     />
+
+    <AnimatePresence>
+      {categoryDialogOpen && (
+        <motion.div
+          className="fixed inset-0 z-[100] flex items-center justify-center px-4"
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          transition={{ duration: 0.15 }}
+          onClick={() => setCategoryDialogOpen(false)}
+        >
+          <div className="absolute inset-0 bg-background/70 backdrop-blur-md" />
+          <motion.form
+            onSubmit={(event) => {
+              event.preventDefault();
+              createCategory();
+            }}
+            className="relative z-10 w-full max-w-sm rounded-2xl border border-white/20 bg-card/90 p-5 shadow-2xl backdrop-blur-xl"
+            initial={{ opacity: 0, y: 10, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.96 }}
+            transition={{ type: "spring", stiffness: 380, damping: 28 }}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="mb-4 flex items-start justify-between gap-4">
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">{t.categories}</p>
+                <h2 className="mt-1 text-lg font-semibold text-card-foreground">{t.categoryDialogTitle}</h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCategoryDialogOpen(false)}
+                className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-card-foreground/50 transition-colors hover:bg-card-foreground/10 hover:text-card-foreground"
+                aria-label={t.cancel}
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <label className="sr-only" htmlFor="category-name">{t.categoryNamePrompt}</label>
+            <input
+              ref={categoryNameInputRef}
+              id="category-name"
+              value={categoryNameDraft}
+              onChange={(event) => setCategoryNameDraft(event.target.value)}
+              placeholder={t.categoryNamePlaceholder}
+              maxLength={40}
+              className="w-full rounded-xl border border-border bg-background/60 px-4 py-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/60 focus:border-primary focus:ring-2 focus:ring-primary/20"
+            />
+
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setCategoryDialogOpen(false)}
+                className="rounded-xl px-4 py-2 text-sm font-medium text-card-foreground/65 transition-colors hover:bg-card-foreground/10 hover:text-card-foreground"
+              >
+                {t.cancel}
+              </button>
+              <button
+                type="submit"
+                disabled={!categoryNameDraft.trim()}
+                className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {t.create}
+              </button>
+            </div>
+          </motion.form>
+        </motion.div>
+      )}
+    </AnimatePresence>
 
     {/* Confirm delete all dialog */}
     <AnimatePresence>
