@@ -20,6 +20,7 @@ interface BoardColumnProps {
   tasks: Task[];
   dropTarget: boolean;
   swapPulse: boolean;
+  isSingleColumn: boolean;
   width: number;
   minWidth: number;
   maxWidth: number;
@@ -47,6 +48,7 @@ export const BoardColumn = ({
   tasks,
   dropTarget,
   swapPulse,
+  isSingleColumn,
   width,
   minWidth,
   maxWidth,
@@ -138,9 +140,10 @@ export const BoardColumn = ({
     <motion.div
       ref={setNodeRef}
       layout
-      style={{ ...style, width, minWidth }}
+      style={{ ...style, width: isSingleColumn ? "100%" : width, minWidth: isSingleColumn ? 0 : minWidth }}
       className={cn(
         "board-column relative flex flex-col rounded-2xl max-h-[80vh] flex-shrink-0 transition-opacity",
+        isSingleColumn && "board-column-single",
         isDragging && "opacity-50",
         dropTarget && !isDragging && "category-drop-glow",
         swapPulse && "category-swap-pulse",
@@ -232,7 +235,10 @@ export const BoardColumn = ({
       />
       
       {/* Column Body */}
-      <div className="flex-1 min-h-[180px] p-3 overflow-y-auto overscroll-contain space-y-3 kanban-scroll" onPointerDown={(e) => e.stopPropagation()}>
+      <div className={cn(
+        "flex-1 min-h-[180px] p-3 overflow-y-auto overscroll-contain space-y-3 kanban-scroll",
+        isSingleColumn && "board-column-single-body"
+      )} onPointerDown={(e) => e.stopPropagation()}>
         <SortableContext items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
           <AnimatePresence initial={false} mode="popLayout">
             {tasks.map(task => (

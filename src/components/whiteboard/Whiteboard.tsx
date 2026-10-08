@@ -731,6 +731,7 @@ export const Whiteboard = () => {
                   category={category}
                   dropTarget={dropTargetCategoryId === category.id}
                   swapPulse={swappedCategoryId === category.id}
+                  isSingleColumn={categories.length === 1}
                   width={columnWidths[category.id] ?? DEFAULT_COLUMN_WIDTH}
                   minWidth={MIN_COLUMN_WIDTH}
                   maxWidth={MAX_COLUMN_WIDTH}

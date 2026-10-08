@@ -168,6 +168,26 @@
     background: hsl(var(--column-header) / 0.72);
     border-color: hsl(var(--column-border) / 0.8);
   }
+  .board-column-single {
+    width: 100%;
+    max-width: 760px;
+    max-height: none;
+    margin-inline: auto;
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+  .board-column-single .board-column-header {
+    border-color: transparent;
+    border-radius: 0.75rem;
+    background: hsl(var(--column-header) / 0.42);
+  }
+  .board-column-single-body {
+    max-height: none;
+    overflow: visible;
+    padding-inline: 0;
+  }
   .full-color-card {
     --card-foreground: var(--foreground);
   }

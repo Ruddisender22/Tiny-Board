@@ -54,6 +54,12 @@ export const translations = {
     deleteAllConfirm: "Delete all tasks? This cannot be undone.",
     changelogEntries: [
       {
+        version: "1.12.0",
+        changes: [
+          "Single-category boards now use a clean flat layout without a column frame",
+        ],
+      },
+      {
         version: "1.11.0",
         changes: [
           "Create-task button now appears only near its interaction area",
@@ -205,6 +211,12 @@ export const translations = {
     deleteAll: "Eliminar todo",
     deleteAllConfirm: "¿Eliminar todas las tareas? Esto no se puede deshacer.",
     changelogEntries: [
+      {
+        version: "1.12.0",
+        changes: [
+          "Los tableros con una sola categoría ahora usan un diseño plano sin marco de columna",
+        ],
+      },
       {
         version: "1.11.0",
         changes: [

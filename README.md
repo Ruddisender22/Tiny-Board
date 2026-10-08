@@ -20,7 +20,10 @@ Everything saves to your browser automatically.
 
 ## Releases
 
-- **v1.11.0 (Current Release)**:
+- **v1.12.0 (Current Release)**:
+  - Single-category boards now use a clean flat layout without a column frame.
+
+- **v1.11.0**:
   - Create-task button appears only near its interaction area.
   - New tasks use a floating preview and require choosing a category.
   - Removed create-task buttons from inside columns.
