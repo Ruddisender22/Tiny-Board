@@ -37,6 +37,7 @@ const MIN_COLUMN_WIDTH = 280;
 const MAX_COLUMN_WIDTH = 640;
 const CANVAS_GRID = 24;
 const COLUMN_GAP = 24;
+const SWAP_HOLD_MS = 2000;
 const ESTIMATED_COLUMN_HEIGHT = 160;
 const CATEGORY_DROP_PREFIX = "category-drop:";
 
@@ -363,6 +364,7 @@ export const Whiteboard = () => {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [draggingColumnId, setDraggingColumnId] = useState<string | null>(null);
   const [settlingColumnId, setSettlingColumnId] = useState<string | null>(null);
+  const [swapHoverId, setSwapHoverId] = useState<string | null>(null);
   const [liveExtent, setLiveExtent] = useState<number | null>(null);
   const [columnSizes, setColumnSizes] = useState<Record<string, ColumnSize>>({});
   const [pendingTask, setPendingTask] = useState<{ name: string; color: TaskColor; tags: string[] } | null>(null);
@@ -701,6 +703,14 @@ export const Whiteboard = () => {
       w: number;
       h: number;
       timer: number;
+      /** Slot the dragged column will settle into (its origin, or the slot of the last column it swapped with). */
+      homeX: number;
+      homeY: number;
+      /** Area of the column it last swapped with; releasing inside it drops the column into `home`. */
+      swapRect: { x: number; y: number; w: number; h: number } | null;
+      hoverId: string | null;
+      hoverTimer: number;
+      cooldownId: string | null;
     };
     let state: DragState | null = null;
     let moveFrame = 0;
@@ -708,6 +718,54 @@ export const Whiteboard = () => {
 
     const place = (x: number, y: number) => `translate3d(${x}px, ${y}px, 0)`;
     const snap = (value: number) => Math.round(value / CANVAS_GRID) * CANVAS_GRID;
+
+    const clearSwapHover = () => {
+      if (!state) return;
+      window.clearTimeout(state.hoverTimer);
+      state.hoverId = null;
+      setSwapHoverId(null);
+    };
+
+    /** Swap the dragged column's slot with the hovered column; both keep their own size. */
+    const commitSwap = (current: DragState, otherId: string) => {
+      if (state !== current || !current.started) return;
+      const other = categoriesRef.current.find((item) => item.id === otherId);
+      if (!other) return;
+      const size = getColumnSize(other);
+      const home = { x: current.homeX, y: current.homeY };
+      setCategories((items) => items.map((item) => (item.id === otherId ? { ...item, x: home.x, y: home.y } : item)));
+      current.swapRect = { x: other.x, y: other.y, w: size.w, h: size.h };
+      current.homeX = other.x;
+      current.homeY = other.y;
+      current.cooldownId = otherId;
+      clearSwapHover();
+    };
+
+    /** Holding the pointer over another column for SWAP_HOLD_MS swaps their positions. */
+    const updateSwapHover = () => {
+      if (!state) return;
+      const canvasRect = canvasRef.current?.getBoundingClientRect();
+      if (!canvasRect) return;
+      const px = state.clientX - canvasRect.left;
+      const py = state.clientY - canvasRect.top;
+      const hit = categoriesRef.current.find((item) => {
+        if (item.id === state!.id) return false;
+        const size = getColumnSize(item);
+        return px >= item.x && px <= item.x + size.w && py >= item.y && py <= item.y + size.h;
+      });
+      let hitId = hit?.id ?? null;
+      // Right after a swap the pointer may still be over the moved column; ignore it until the pointer leaves.
+      if (hitId === state.cooldownId) hitId = null;
+      else state.cooldownId = null;
+      if (hitId === state.hoverId) return;
+      window.clearTimeout(state.hoverTimer);
+      state.hoverId = hitId;
+      setSwapHoverId(hitId);
+      if (hitId) {
+        const current = state;
+        state.hoverTimer = window.setTimeout(() => commitSwap(current, hitId!), SWAP_HOLD_MS);
+      }
+    };
 
     const applyPosition = () => {
       if (!state || !state.started) return;
@@ -717,6 +775,7 @@ export const Whiteboard = () => {
       state.curX = Math.min(Math.max(0, canvasWidth - state.w), Math.max(0, state.startX + pageX - state.startPageX));
       state.curY = Math.max(0, state.startY + pageY - state.startPageY);
       state.element.style.transform = place(state.curX, state.curY);
+      updateSwapHover();
       // The canvas keeps expanding below the column while it is being dragged downwards.
       const extent = Math.ceil((state.curY + state.h + 240) / 100) * 100;
       if (extent > liveExtentRef.current) {
@@ -745,7 +804,10 @@ export const Whiteboard = () => {
       window.removeEventListener("pointerup", handleUp);
       window.removeEventListener("pointercancel", handleCancel);
       window.removeEventListener("touchmove", blockTouchScroll);
-      if (state) window.clearTimeout(state.timer);
+      if (state) {
+        window.clearTimeout(state.timer);
+        window.clearTimeout(state.hoverTimer);
+      }
       cancelAnimationFrame(moveFrame);
     };
 
@@ -795,13 +857,21 @@ export const Whiteboard = () => {
       document.body.style.userSelect = "";
       document.body.style.cursor = "";
 
-      let target: Point = { x: current.startX, y: current.startY };
+      let target: Point = { x: current.homeX, y: current.homeY };
       if (!cancelled) {
         state = current;
         applyPosition();
         state = null;
-        target = findFreePosition(current.id, current.w, current.h, snap(current.curX), snap(current.curY));
+        const canvasRect = canvasRef.current?.getBoundingClientRect();
+        const rect = current.swapRect;
+        const releasedInSwapSlot = Boolean(canvasRect && rect) &&
+          current.clientX - canvasRect!.left >= rect!.x && current.clientX - canvasRect!.left <= rect!.x + rect!.w &&
+          current.clientY - canvasRect!.top >= rect!.y && current.clientY - canvasRect!.top <= rect!.y + rect!.h;
+        target = releasedInSwapSlot
+          ? { x: current.homeX, y: current.homeY }
+          : findFreePosition(current.id, current.w, current.h, snap(current.curX), snap(current.curY));
       }
+      setSwapHoverId(null);
       // Glide from wherever the column was released to its final spot (set directly so React and the DOM agree).
       current.element.style.transition = COLUMN_TRANSITION;
       current.element.style.transform = place(target.x, target.y);
@@ -849,6 +919,12 @@ export const Whiteboard = () => {
         w: element.offsetWidth,
         h: element.offsetHeight,
         timer: 0,
+        homeX: category.x,
+        homeY: category.y,
+        swapRect: null,
+        hoverId: null,
+        hoverTimer: 0,
+        cooldownId: null,
       };
       window.addEventListener("pointermove", handleMove);
       window.addEventListener("pointerup", handleUp);
@@ -861,7 +937,7 @@ export const Whiteboard = () => {
 
     return { start };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [findFreePosition]);
+  }, [findFreePosition, getColumnSize]);
 
   /* ── Task drag & drop ─────────────────────────────────────────────── */
 
@@ -1079,7 +1155,7 @@ export const Whiteboard = () => {
                   category={category}
                   x={category.x}
                   y={category.y}
-                  dropTarget={Boolean(activeId) && dragPreviewCategoryId === category.id && activeTaskCategoryId !== category.id}
+                  dropTarget={swapHoverId === category.id || (Boolean(activeId) && dragPreviewCategoryId === category.id && activeTaskCategoryId !== category.id)}
                   dragging={draggingColumnId === category.id}
                   raised={draggingColumnId === category.id || settlingColumnId === category.id}
                   onHeaderPointerDown={columnDrag.start}

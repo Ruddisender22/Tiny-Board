@@ -24,7 +24,10 @@ Tiny Board is local by design. It does not require an account or backend, and ta
 
 ## Releases
 
-- **v1.25.0 (Current Release)**:
+- **v1.26.0 (Current Release)**:
+  - Hold a dragged column over another for 2 seconds to swap their positions; each keeps its own size.
+
+- **v1.25.0**:
   - Tasks can be dropped into empty columns from any other column.
   - Category selection when creating a task is visible and clickable again.
   - Column dragging is smooth, glides into place on release, and columns stay where you drop them; the canvas grows as needed.

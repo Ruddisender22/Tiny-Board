@@ -54,6 +54,12 @@ export const translations = {
     deleteAllConfirm: "Delete all tasks? This cannot be undone.",
     changelogEntries: [
       {
+        version: "1.26.0",
+        changes: [
+          "Hold a dragged column over another for 2 seconds to swap their positions (each keeps its size)",
+        ],
+      },
+      {
         version: "1.25.0",
         changes: [
           "Tasks can now be dropped into empty columns from any other column",
@@ -311,6 +317,12 @@ export const translations = {
     deleteAll: "Eliminar todo",
     deleteAllConfirm: "¿Eliminar todas las tareas? Esto no se puede deshacer.",
     changelogEntries: [
+      {
+        version: "1.26.0",
+        changes: [
+          "Mantén una columna arrastrada 2 segundos sobre otra para intercambiar sus posiciones (cada una conserva su tamaño)",
+        ],
+      },
       {
         version: "1.25.0",
         changes: [
