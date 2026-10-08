@@ -139,12 +139,12 @@ export const BoardColumn = ({
   return (
     <motion.div
       ref={setNodeRef}
-      layout
+      layout={!isDragging}
       style={{ ...style, width: isSingleColumn ? "100%" : width, minWidth: isSingleColumn ? 0 : minWidth }}
       className={cn(
-        "board-column relative flex flex-col rounded-2xl max-h-[80vh] flex-shrink-0 transition-opacity",
+        "board-column relative flex flex-col rounded-2xl max-h-[80vh] flex-shrink-0 transition-[box-shadow,border-color]",
         isSingleColumn && "board-column-single",
-        isDragging && "opacity-50",
+        isDragging && "z-50 opacity-100",
         dropTarget && !isDragging && "category-drop-glow",
         swapPulse && "category-swap-pulse",
         selectionMode && "category-selection-glow relative z-50 cursor-pointer"
