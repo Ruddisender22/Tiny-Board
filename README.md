@@ -20,12 +20,12 @@ Everything saves to your browser automatically.
 
 ## Releases
 
-- **v1.9.0**:
+- **v1.9.0 (Current Release)**:
   - Added glass-style category columns with horizontal scrolling on mobile.
   - Added category creation, renaming, color changes, deletion, and reordering.
   - Added moving and reordering tasks across categories.
 
-- **v1.8.0 (Current Release)**:
+- **v1.8.0**:
   - Added "Delete all" button (🗑) with a confirmation dialog.
   - Create-task button: translucent & dashed when in-flow, solid & larger when floating.
   - Mobile touch support (single-tap to edit, double-tap to complete, hold handle to move).

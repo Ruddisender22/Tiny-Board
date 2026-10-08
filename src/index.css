@@ -138,4 +138,18 @@
     background-size: 22px 22px;
     background-position: 0 0;
   }
+
+  .kanban-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--card-foreground) / 0.2) transparent;
+  }
+
+  .kanban-scroll::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .kanban-scroll::-webkit-scrollbar-thumb {
+    background: hsl(var(--card-foreground) / 0.2);
+    border-radius: 999px;
+  }
 }

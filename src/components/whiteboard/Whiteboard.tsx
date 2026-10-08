@@ -16,7 +16,6 @@ import {
   SortableContext,
   arrayMove,
   horizontalListSortingStrategy,
-  verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { Github, X, HelpCircle, Settings, Sun, Moon, Cloud, Trash2 } from "lucide-react";
 import { TaskCard, Task } from "./TaskCard";
@@ -371,26 +370,6 @@ export const Whiteboard = () => {
     return list;
   }, [tasks, filterTag, statusFilter]);
 
-  const shouldSlideRight = statusFilter !== "all";
-
-  // Detect when the sticky create-frame is floating (must come after displayedTasks)
-  const sentinelRef = useRef<HTMLDivElement>(null);
-  const [isStuck, setIsStuck] = useState(false);
-
-  useEffect(() => {
-    const el = sentinelRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => setIsStuck(!entry.isIntersecting),
-      { threshold: 0, rootMargin: "0px 0px -80px 0px" }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  // Re-connect when task count changes so observer updates
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [displayedTasks.length]);
-
-
   const addTask = useCallback((name: string, color: TaskColor, tags: string[]) => {
     setTasks((prev) => [
       {
@@ -459,10 +438,6 @@ export const Whiteboard = () => {
 
   const renameTask = useCallback((id: string, name: string) => {
     setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, name } : t)));
-  }, []);
-
-  const moveTaskToCategory = useCallback((id: string, categoryId: string) => {
-    setTasks((prev) => prev.map((task) => task.id === id ? { ...task, categoryId } : task));
   }, []);
 
   const deleteAllTasks = useCallback(() => {

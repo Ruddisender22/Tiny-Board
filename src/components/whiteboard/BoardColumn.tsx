@@ -181,7 +181,7 @@ export const BoardColumn = ({
       </div>
       
       {/* Column Body */}
-      <div className="flex-1 p-3 overflow-y-auto space-y-3 kanban-scroll" onPointerDown={(e) => e.stopPropagation()}>
+      <div className="flex-1 min-h-[180px] p-3 overflow-y-auto overscroll-contain space-y-3 kanban-scroll" onPointerDown={(e) => e.stopPropagation()}>
         <SortableContext items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
           <AnimatePresence initial={false} mode="popLayout">
             {tasks.map(task => (
