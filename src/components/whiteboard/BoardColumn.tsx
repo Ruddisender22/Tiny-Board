@@ -90,7 +90,7 @@ export const BoardColumn = ({
   const style = {
     left: x,
     top: y,
-    transform: CSS.Translate.toString(transform),
+    transform: undefined,
     zIndex: isDragging ? 80 : undefined,
   };
   
@@ -250,7 +250,7 @@ export const BoardColumn = ({
       
       {/* Column Body */}
       <div className={cn(
-        "board-column-body flex flex-col gap-3 flex-1 min-h-0 p-3 overflow-y-auto overscroll-contain kanban-scroll",
+        "board-column-body flex flex-col gap-3 p-3",
         isSingleColumn && "board-column-single-body"
       )} onPointerDown={(e) => e.stopPropagation()}>
         <SortableContext items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>

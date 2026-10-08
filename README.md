@@ -24,7 +24,10 @@ Tiny Board is local by design. It does not require an account or backend, and ta
 
 ## Releases
 
-- **v1.19.0 (Current Release)**:
+- **v1.20.0 (Current Release)**:
+  - Removed the internal column scrollbar so the window handles vertical scrolling.
+
+- **v1.19.0**:
   - Redesigned the board as a fixed-toolbar canvas with grid-snapped free column movement.
   - Added a radial creation menu fixed to the bottom-right corner.
   - Preserved column content and shape throughout dragging.

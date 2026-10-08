@@ -159,7 +159,8 @@
     box-shadow: 0 2px 4px hsl(var(--task-shadow) / 0.1), 0 8px 24px hsl(var(--task-shadow) / 0.12);
   }
   .board-column {
-    height: min(80vh, 760px);
+    height: auto;
+    max-height: none;
     background: hsl(var(--column-bg) / 0.82);
     border: 1px solid hsl(var(--column-border) / 0.9);
     box-shadow: 0 12px 30px hsl(var(--task-shadow) / 0.14), inset 0 1px 0 hsl(0 0% 100% / 0.08);

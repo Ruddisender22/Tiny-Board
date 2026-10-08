@@ -41,6 +41,8 @@ const DEFAULT_COLUMN_WIDTH = 360;
 const MIN_COLUMN_WIDTH = 280;
 const MAX_COLUMN_WIDTH = 640;
 const CANVAS_GRID = 24;
+const CANVAS_PADDING = 24;
+const COLUMN_HEIGHT = 760;
 
 const DEFAULT_CATEGORY: Category = {
   id: "category-default",
@@ -349,8 +351,10 @@ export const Whiteboard = () => {
   const [theme, setTheme] = useState<Theme>(() => loadTheme());
   const [fullColor, setFullColor] = useState(() => loadFullColor());
   const boardRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<CreateTaskFrameHandle>(null);
   const categoryNameInputRef = useRef<HTMLInputElement>(null);
+  const dragStartPositionsRef = useRef<Record<string, { x: number; y: number }>>({});
   const createAnchorRef = useRef<HTMLDivElement>(null);
   const isTouch = useIsTouchDevice();
 
@@ -523,23 +527,74 @@ export const Whiteboard = () => {
     setConfirmDeleteAll(false);
   }, []);
 
+  const columnRect = (category: Category, x = category.x, y = category.y) => ({
+    left: x,
+    top: y,
+    right: x + (columnWidths[category.id] ?? DEFAULT_COLUMN_WIDTH),
+    bottom: y + COLUMN_HEIGHT,
+  });
+
+  const overlapsColumn = (candidate: ReturnType<typeof columnRect>, other: ReturnType<typeof columnRect>) =>
+    candidate.left < other.right && candidate.right > other.left &&
+    candidate.top < other.bottom && candidate.bottom > other.top;
+
+  const getCanvasBounds = (category: Category) => {
+    const canvas = canvasRef.current;
+    const availableWidth = canvas?.clientWidth ?? window.innerWidth;
+    const availableHeight = Math.max(canvas?.clientHeight ?? window.innerHeight, COLUMN_HEIGHT + CANVAS_PADDING * 2);
+    return {
+      maxX: Math.max(CANVAS_PADDING, availableWidth - (columnWidths[category.id] ?? DEFAULT_COLUMN_WIDTH) - CANVAS_PADDING),
+      maxY: Math.max(CANVAS_PADDING, availableHeight - COLUMN_HEIGHT - CANVAS_PADDING),
+    };
+  };
+
+  const resolveColumnPosition = (category: Category, x: number, y: number) => {
+    const bounds = getCanvasBounds(category);
+    const clamp = (value: number, max: number) => Math.min(max, Math.max(CANVAS_PADDING, Math.round(value / CANVAS_GRID) * CANVAS_GRID));
+    const baseX = clamp(x, bounds.maxX);
+    const baseY = clamp(y, bounds.maxY);
+    const others = categories.filter((other) => other.id !== category.id).map((other) => columnRect(other));
+    const isFree = (candidateX: number, candidateY: number) => {
+      const candidate = columnRect(category, candidateX, candidateY);
+      return !others.some((other) => overlapsColumn(candidate, other));
+    };
+    if (isFree(baseX, baseY)) return { x: baseX, y: baseY };
+    for (let radius = 1; radius <= 12; radius += 1) {
+      for (let offset = -radius; offset <= radius; offset += 1) {
+        const candidates = [
+          [baseX + offset * CANVAS_GRID, baseY - radius * CANVAS_GRID],
+          [baseX + offset * CANVAS_GRID, baseY + radius * CANVAS_GRID],
+          [baseX - radius * CANVAS_GRID, baseY + offset * CANVAS_GRID],
+          [baseX + radius * CANVAS_GRID, baseY + offset * CANVAS_GRID],
+        ];
+        for (const [candidateX, candidateY] of candidates) {
+          const nextX = clamp(candidateX, bounds.maxX);
+          const nextY = clamp(candidateY, bounds.maxY);
+          if (isFree(nextX, nextY)) return { x: nextX, y: nextY };
+        }
+      }
+    }
+    return { x: category.x, y: category.y };
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveId(null);
     setDropTargetCategoryId(null);
     setDragPreviewCategoryId(null);
     setDragPreviewTaskId(null);
-    if (!over || active.id === over.id) return;
-
     if (categories.some((category) => category.id === active.id)) {
       const activeCategory = categories.find((category) => category.id === active.id);
       if (!activeCategory) return;
-      const nextX = Math.max(CANVAS_GRID, Math.round((activeCategory.x + event.delta.x) / CANVAS_GRID) * CANVAS_GRID);
-      const nextY = Math.max(CANVAS_GRID, Math.round((activeCategory.y + event.delta.y) / CANVAS_GRID) * CANVAS_GRID);
-      setCategories((items) => items.map((category) => category.id === active.id ? { ...category, x: nextX, y: nextY } : category));
+      const start = dragStartPositionsRef.current[String(active.id)] ?? activeCategory;
+      const next = resolveColumnPosition(activeCategory, start.x + event.delta.x, start.y + event.delta.y);
+      setCategories((items) => items.map((category) => category.id === active.id ? { ...category, ...next } : category));
       setSwappedCategoryId(null);
+      dragStartPositionsRef.current = {};
       return;
     }
+
+    if (!over || active.id === over.id) return;
 
     setTasks((items) => {
       const movingTask = items.find((task) => task.id === active.id);
@@ -566,6 +621,8 @@ export const Whiteboard = () => {
     const activeTask = tasks.find((task) => task.id === event.active.id);
     setDragPreviewCategoryId(activeTask?.categoryId ?? null);
     setDragPreviewTaskId(null);
+    const activeCategory = categories.find((category) => category.id === event.active.id);
+    if (activeCategory) dragStartPositionsRef.current = { [activeCategory.id]: { x: activeCategory.x, y: activeCategory.y } };
   };
 
   const handleDragOver = (event: DragOverEvent) => {
@@ -584,7 +641,14 @@ export const Whiteboard = () => {
   };
 
   const handleDragMove = (event: DragMoveEvent) => {
-    if (categories.some((category) => category.id === event.active.id)) return;
+    if (categories.some((category) => category.id === event.active.id)) {
+      const activeCategory = categories.find((category) => category.id === event.active.id);
+      const start = activeCategory && dragStartPositionsRef.current[activeCategory.id];
+      if (!activeCategory || !start) return;
+      const next = resolveColumnPosition(activeCategory, start.x + event.delta.x, start.y + event.delta.y);
+      setCategories((items) => items.map((category) => category.id === activeCategory.id ? { ...category, ...next } : category));
+      return;
+    }
     const translated = event.active.rect.current.translated;
     if (!translated) return;
     const centerX = translated.left + translated.width / 2;
@@ -738,7 +802,7 @@ export const Whiteboard = () => {
             </div>
           </div>
           <SortableContext items={categories.map((category) => category.id)} strategy={horizontalListSortingStrategy}>
-            <div className="whiteboard-canvas relative min-h-[calc(100vh-220px)] w-full overflow-auto pb-32">
+            <div className="whiteboard-canvas relative min-h-[calc(100vh-220px)] w-full pb-32">
               {categories.map((category) => (
                 <BoardColumn
                   key={category.id}

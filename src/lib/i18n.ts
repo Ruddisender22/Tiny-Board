@@ -54,6 +54,12 @@ export const translations = {
     deleteAllConfirm: "Delete all tasks? This cannot be undone.",
     changelogEntries: [
       {
+        version: "1.20.0",
+        changes: [
+          "Removed the internal column scrollbar so the window handles vertical scrolling",
+        ],
+      },
+      {
         version: "1.19.0",
         changes: [
           "Redesigned the board as a fixed-toolbar canvas with grid-snapped free column movement",
@@ -264,6 +270,12 @@ export const translations = {
     deleteAll: "Eliminar todo",
     deleteAllConfirm: "¿Eliminar todas las tareas? Esto no se puede deshacer.",
     changelogEntries: [
+      {
+        version: "1.20.0",
+        changes: [
+          "Eliminada la barra interna de columnas para usar el scroll de la ventana",
+        ],
+      },
       {
         version: "1.19.0",
         changes: [
