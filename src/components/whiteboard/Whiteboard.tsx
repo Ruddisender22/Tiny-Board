@@ -657,9 +657,15 @@ export const Whiteboard = () => {
     if (categories.some((category) => category.id === event.active.id)) {
       const translated = event.active.rect.current.translated;
       if (!translated) return;
-      const element = document.elementFromPoint(translated.left + translated.width / 2, translated.top + translated.height / 2);
-      const target = element?.closest<HTMLElement>("[data-category-id]");
-      const targetId = target?.dataset.categoryId ?? null;
+      const canvasRect = canvasRef.current?.getBoundingClientRect();
+      if (!canvasRect) return;
+      const pointerX = translated.left + translated.width / 2 - canvasRect.left;
+      const pointerY = translated.top + translated.height / 2 - canvasRect.top;
+      const targetId = categories.find((category) => {
+        if (category.id === String(event.active.id)) return false;
+        const rect = columnRect(category);
+        return pointerX >= rect.left && pointerX <= rect.right && pointerY >= rect.top && pointerY <= rect.bottom;
+      })?.id ?? null;
       columnDropTargetRef.current = targetId === String(event.active.id) ? null : targetId;
       setDropTargetCategoryId(columnDropTargetRef.current);
       return;
@@ -716,9 +722,9 @@ export const Whiteboard = () => {
     <main
       ref={boardRef}
       onClick={handleBoardClick}
-      className="relative z-10 min-h-screen w-full px-4 py-12 sm:py-20 pb-32"
+      className="relative z-10 min-h-screen w-full px-0 pb-32"
     >
-      <div className="mx-auto w-full max-w-[1440px]">
+      <div className="w-full">
         <div className="app-top-strip">
         <header className="mb-4 flex flex-col gap-3 border-b border-border/50 pb-4 md:flex-row md:items-end md:justify-between">
           <div>
@@ -816,7 +822,7 @@ export const Whiteboard = () => {
               )}
             </div>
           </div>
-          <div className="whiteboard-canvas relative min-h-[calc(100vh-220px)] w-full pb-32">
+            <div ref={canvasRef} className="whiteboard-canvas relative min-h-[calc(100vh-220px)] w-full pb-32">
               {categories.map((category) => (
                 <BoardColumn
                   key={category.id}

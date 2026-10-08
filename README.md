@@ -24,7 +24,12 @@ Tiny Board is local by design. It does not require an account or backend, and ta
 
 ## Releases
 
-- **v1.22.0 (Current Release)**:
+- **v1.23.0 (Current Release)**:
+  - Removed the top gap and centered board constraint.
+  - Improved smooth column dragging by hiding task content during movement.
+  - Fixed column target detection and swapping on the freeform canvas.
+
+- **v1.22.0**:
   - Collapsed empty columns to a compact header-only layout.
   - Moved pending task creation to the top while keeping category targets visible below.
 

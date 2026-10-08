@@ -280,6 +280,9 @@
   .board-column-body {
     min-height: 180px;
   }
+  .column-dragging .board-column-body {
+    visibility: hidden;
+  }
   .board-column-empty-body {
     min-height: 12px;
     padding-top: 0.35rem;

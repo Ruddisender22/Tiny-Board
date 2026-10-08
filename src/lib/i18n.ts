@@ -54,6 +54,14 @@ export const translations = {
     deleteAllConfirm: "Delete all tasks? This cannot be undone.",
     changelogEntries: [
       {
+        version: "1.23.0",
+        changes: [
+          "Removed the top gap and centered board constraint",
+          "Improved smooth column dragging by hiding task content during movement",
+          "Fixed column target detection and swapping on the freeform canvas",
+        ],
+      },
+      {
         version: "1.22.0",
         changes: [
           "Collapsed empty columns to a compact header-only layout",
@@ -285,6 +293,14 @@ export const translations = {
     deleteAll: "Eliminar todo",
     deleteAllConfirm: "¿Eliminar todas las tareas? Esto no se puede deshacer.",
     changelogEntries: [
+      {
+        version: "1.23.0",
+        changes: [
+          "Eliminado el hueco superior y la limitación centrada de la pizarra",
+          "Mejorado el drag suave ocultando las tarjetas durante el movimiento",
+          "Corregida la detección y sustitución de columnas en la pizarra libre",
+        ],
+      },
       {
         version: "1.22.0",
         changes: [
