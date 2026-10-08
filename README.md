@@ -1,6 +1,6 @@
 # Ruddis' Tiny Board
 
-A minimal task board that lives in your browser. No accounts, no servers — just open it and start adding tasks.
+A private local task board that runs in your browser. No account, backend, or task-data collection: your tasks stay in browser storage and are not sent by the app.
 
 **Live:** [ruddisender22.github.io/Tiny-Board](https://ruddisender22.github.io/Tiny-Board/)
 
@@ -17,6 +17,10 @@ A minimal task board that lives in your browser. No accounts, no servers — jus
 - Available in **English** and **Spanish**.
 
 Everything saves to your browser automatically.
+
+## Privacy
+
+Tiny Board is local by design. It does not require an account or backend, and task data is stored in your browser rather than sent to the app's servers. Clearing browser storage removes local tasks.
 
 ## Releases
 

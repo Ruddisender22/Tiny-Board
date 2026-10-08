@@ -4,7 +4,7 @@ export type Theme = "light" | "mixed" | "dark";
 export const translations = {
   en: {
     title: "Ruddis' Tiny Board",
-    subtitle: "Hover anywhere to create a task. Drag to reorder. Right-click to complete.",
+    subtitle: "Private local board. Your tasks stay in this browser. No account or backend.",
     tags: "Tags:",
     clear: "Clear",
     all: "All",
@@ -28,7 +28,7 @@ export const translations = {
     changeColor: "Change color",
     tag: "tag",
     helpTitle: "Controls & Features",
-    helpSaved: "All tasks are saved automatically in your browser.",
+    helpSaved: "Private by design: tasks stay in this browser and are not sent by the app.",
     help: [
       { key: "Hover", desc: "over the board to reveal the create-task button (always visible on mobile)." },
       { key: "Double-click / Tap", desc: "a task name to rename it inline." },
@@ -170,7 +170,7 @@ export const translations = {
   },
   es: {
     title: "Ruddis' Tiny Board",
-    subtitle: "Pasa el ratón para crear una tarea. Arrastra para reordenar. Clic derecho para completar.",
+    subtitle: "Tablero local y privado. Tus tareas permanecen en este navegador. Sin cuenta ni servidor.",
     tags: "Etiquetas:",
     clear: "Limpiar",
     all: "Todas",
@@ -194,7 +194,7 @@ export const translations = {
     changeColor: "Cambiar color",
     tag: "etiqueta",
     helpTitle: "Controles y Funciones",
-    helpSaved: "Todas las tareas se guardan automáticamente en tu navegador.",
+    helpSaved: "Privacidad por diseño: tus tareas permanecen en este navegador y la app no las envía.",
     help: [
       { key: "Pasar el ratón", desc: "sobre el tablero para ver el botón de crear tarea (siempre visible en móvil)." },
       { key: "Doble clic / Toque", desc: "en el nombre de una tarea para editarlo." },
