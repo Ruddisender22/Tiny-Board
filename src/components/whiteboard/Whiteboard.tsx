@@ -15,10 +15,12 @@ import {
 import {
   SortableContext,
   arrayMove,
+  horizontalListSortingStrategy,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { Github, X, HelpCircle, Settings, Sun, Moon, Cloud, Trash2 } from "lucide-react";
 import { TaskCard, Task } from "./TaskCard";
+import { BoardColumn, Category } from "./BoardColumn";
 import { CreateTaskFrame, CreateTaskFrameHandle } from "./CreateTaskFrame";
 import { TaskColor, DEFAULT_HUE } from "@/lib/taskColors";
 import {
@@ -32,7 +34,14 @@ import {
 import { useIsTouchDevice } from "@/lib/utils";
 
 const STORAGE_KEY = "whiteboard:tasks:v2";
+const CATEGORIES_STORAGE_KEY = "whiteboard:categories:v1";
 const GITHUB_USER = "Ruddisender22";
+
+const DEFAULT_CATEGORY: Category = {
+  id: "category-default",
+  name: "General",
+  color: DEFAULT_HUE,
+};
 
 type StatusFilter = "all" | "active" | "completed";
 
@@ -54,6 +63,7 @@ const loadTasks = (): Task[] => {
             color: typeof t.color === "number" ? t.color : DEFAULT_HUE,
             completed: !!t.completed,
             tags: Array.isArray(t.tags) ? t.tags.filter((x: unknown) => typeof x === "string") : [],
+            categoryId: typeof t.categoryId === "string" ? t.categoryId : DEFAULT_CATEGORY.id,
           }));
       }
     }
@@ -69,6 +79,7 @@ const loadTasks = (): Task[] => {
             color: legacyHueMap[t.color] ?? DEFAULT_HUE,
             completed: !!t.completed,
             tags: [],
+            categoryId: DEFAULT_CATEGORY.id,
           }));
       }
     }
@@ -76,6 +87,28 @@ const loadTasks = (): Task[] => {
   } catch {
     return [];
   }
+};
+
+const loadCategories = (): Category[] => {
+  try {
+    const raw = localStorage.getItem(CATEGORIES_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        const categories = parsed
+          .filter((category) => category && typeof category.id === "string")
+          .map((category) => ({
+            id: category.id,
+            name: String(category.name ?? "Untitled"),
+            color: typeof category.color === "number" ? category.color : DEFAULT_HUE,
+          }));
+        if (categories.length > 0) return categories;
+      }
+    }
+  } catch {
+    // Fall through to the default category when stored data is invalid.
+  }
+  return [DEFAULT_CATEGORY];
 };
 
 const sortWithCompletedLast = (tasks: Task[]): Task[] => {
@@ -266,6 +299,7 @@ const SettingsPanel = ({
 
 export const Whiteboard = () => {
   const [tasks, setTasks] = useState<Task[]>(() => loadTasks());
+  const [categories, setCategories] = useState<Category[]>(() => loadCategories());
   const [hovered, setHovered] = useState(false);
   const [creating, setCreating] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -277,6 +311,7 @@ export const Whiteboard = () => {
   const [lang, setLang] = useState<Lang>(() => loadLang());
   const [theme, setTheme] = useState<Theme>(() => loadTheme());
   const [fullColor, setFullColor] = useState(() => loadFullColor());
+  const [creatingCategoryId, setCreatingCategoryId] = useState(() => loadCategories()[0]?.id ?? DEFAULT_CATEGORY.id);
   const boardRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<CreateTaskFrameHandle>(null);
   const isTouch = useIsTouchDevice();
@@ -312,6 +347,10 @@ export const Whiteboard = () => {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
   }, [tasks]);
+
+  useEffect(() => {
+    localStorage.setItem(CATEGORIES_STORAGE_KEY, JSON.stringify(categories));
+  }, [categories]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
@@ -354,9 +393,46 @@ export const Whiteboard = () => {
 
   const addTask = useCallback((name: string, color: TaskColor, tags: string[]) => {
     setTasks((prev) => [
-      { id: crypto.randomUUID(), name, color, completed: false, tags },
+      {
+        id: crypto.randomUUID(),
+        name,
+        color,
+        completed: false,
+        tags,
+        categoryId: creatingCategoryId,
+      },
       ...prev,
     ]);
+  }, [creatingCategoryId]);
+
+  const addCategory = useCallback(() => {
+    const name = window.prompt(t.categoryNamePrompt);
+    const trimmed = name?.trim();
+    if (!trimmed) return;
+    const category: Category = {
+      id: crypto.randomUUID(),
+      name: trimmed,
+      color: DEFAULT_HUE,
+    };
+    setCategories((prev) => [...prev, category]);
+    setCreatingCategoryId(category.id);
+  }, [t.categoryNamePrompt]);
+
+  const renameCategory = useCallback((id: string, name: string) => {
+    setCategories((prev) => prev.map((category) => category.id === id ? { ...category, name } : category));
+  }, []);
+
+  const deleteCategory = useCallback((id: string) => {
+    if (categories.length <= 1) return;
+    const fallback = categories.find((category) => category.id !== id);
+    if (!fallback) return;
+    setCategories((prev) => prev.filter((category) => category.id !== id));
+    setTasks((prev) => prev.map((task) => task.categoryId === id ? { ...task, categoryId: fallback.id } : task));
+    setCreatingCategoryId((current) => current === id ? fallback.id : current);
+  }, [categories]);
+
+  const changeCategoryColor = useCallback((id: string, color: TaskColor) => {
+    setCategories((prev) => prev.map((category) => category.id === id ? { ...category, color } : category));
   }, []);
 
   const toggleTask = useCallback((id: string) => {
@@ -385,6 +461,10 @@ export const Whiteboard = () => {
     setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, name } : t)));
   }, []);
 
+  const moveTaskToCategory = useCallback((id: string, categoryId: string) => {
+    setTasks((prev) => prev.map((task) => task.id === id ? { ...task, categoryId } : task));
+  }, []);
+
   const deleteAllTasks = useCallback(() => {
     setTasks([]);
     setConfirmDeleteAll(false);
@@ -394,11 +474,32 @@ export const Whiteboard = () => {
     const { active, over } = event;
     setActiveId(null);
     if (!over || active.id === over.id) return;
+
+    if (categories.some((category) => category.id === active.id)) {
+      setCategories((items) => {
+        const oldIndex = items.findIndex((category) => category.id === active.id);
+        const newIndex = items.findIndex((category) => category.id === over.id);
+        return oldIndex < 0 || newIndex < 0 ? items : arrayMove(items, oldIndex, newIndex);
+      });
+      return;
+    }
+
     setTasks((items) => {
-      const oldIndex = items.findIndex((i) => i.id === active.id);
-      const newIndex = items.findIndex((i) => i.id === over.id);
-      if (oldIndex < 0 || newIndex < 0) return items;
-      return arrayMove(items, oldIndex, newIndex);
+      const movingTask = items.find((task) => task.id === active.id);
+      if (!movingTask) return items;
+      const targetTask = items.find((task) => task.id === over.id);
+      const targetCategoryId = categories.some((category) => category.id === over.id)
+        ? String(over.id)
+        : targetTask?.categoryId;
+      if (!targetCategoryId) return items;
+
+      const remaining = items.filter((task) => task.id !== active.id);
+      const targetIndex = targetTask
+        ? remaining.findIndex((task) => task.id === targetTask.id)
+        : remaining.reduce((lastIndex, task, index) => task.categoryId === targetCategoryId ? index : lastIndex, -1) + 1;
+      const next = { ...movingTask, categoryId: targetCategoryId };
+      remaining.splice(Math.max(0, targetIndex), 0, next);
+      return remaining;
     });
   };
 
@@ -475,30 +576,52 @@ export const Whiteboard = () => {
           </div>
         )}
 
+        <div className="mb-5 flex items-center justify-between gap-3">
+          <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground/70">{t.categories}</span>
+          <button
+            type="button"
+            onClick={addCategory}
+            className="inline-flex items-center rounded-full border border-border bg-card/70 px-3 py-1.5 text-xs font-medium text-card-foreground/70 shadow-sm backdrop-blur transition-colors hover:bg-card hover:text-card-foreground"
+          >
+            + {t.addCategory}
+          </button>
+        </div>
+
         <DndContext sensors={sensors} collisionDetection={closestCenter}
           onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragCancel={() => setActiveId(null)}
         >
-          <SortableContext items={displayedTasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
-            <div className="flex flex-col gap-3">
-              <AnimatePresence initial={false} mode="popLayout">
-                {displayedTasks.map((task) => (
-                  <TaskCard key={task.id} task={task}
-                    onToggle={toggleTask} onDelete={deleteTask} onRename={renameTask}
-                    onAddTag={addTag} onRemoveTag={removeTag} onChangeColor={changeColor}
-                    exitSlideRight={shouldSlideRight} fullColor={fullColor} lang={lang}
-                  />
-                ))}
-              </AnimatePresence>
-
-              <div ref={sentinelRef} className="h-0 w-full" aria-hidden />
-              <div className="sticky bottom-16 z-40 pb-4">
-                {showCreateFrame && (
-                  <CreateTaskFrame ref={frameRef} visible={showCreateFrame} active={creating}
-                    onActivate={() => setCreating(true)} onSubmit={addTask} onCancel={() => setCreating(false)}
-                    lang={lang} isStuck={isStuck}
-                  />
-                )}
-              </div>
+          {showCreateFrame && (
+            <div className="mb-5">
+              <CreateTaskFrame ref={frameRef} visible={showCreateFrame} active={creating}
+                onActivate={() => setCreating(true)} onSubmit={addTask} onCancel={() => setCreating(false)}
+                lang={lang} isStuck={false}
+              />
+            </div>
+          )}
+          <SortableContext items={categories.map((category) => category.id)} strategy={horizontalListSortingStrategy}>
+            <div className="flex max-w-full gap-4 overflow-x-auto pb-5 snap-x snap-mandatory">
+              {categories.map((category) => (
+                <BoardColumn
+                  key={category.id}
+                  category={category}
+                  tasks={displayedTasks.filter((task) => task.categoryId === category.id)}
+                  onRenameCategory={renameCategory}
+                  onDeleteCategory={deleteCategory}
+                  onChangeCategoryColor={changeCategoryColor}
+                  onAddTask={(categoryId) => {
+                    setCreatingCategoryId(categoryId);
+                    setCreating(true);
+                  }}
+                  onToggleTask={toggleTask}
+                  onDeleteTask={deleteTask}
+                  onRenameTask={renameTask}
+                  onAddTag={addTag}
+                  onRemoveTag={removeTag}
+                  onChangeTaskColor={changeColor}
+                  fullColor={fullColor}
+                  lang={lang}
+                />
+              ))}
             </div>
           </SortableContext>
           <DragOverlay dropAnimation={{ duration: 200, easing: "cubic-bezier(0.18, 0.67, 0.6, 1.22)" }}>

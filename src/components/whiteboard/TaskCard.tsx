@@ -15,6 +15,7 @@ export interface Task {
   color: TaskColor;
   completed: boolean;
   tags: string[];
+  categoryId: string;
 }
 
 interface TaskCardProps {

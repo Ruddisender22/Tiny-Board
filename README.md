@@ -12,12 +12,18 @@ A minimal task board that lives in your browser. No accounts, no servers — jus
 - **Drag** the handle to reorder.
 - Click the **color dot** to pick a color, or toggle **Full-Color** in settings.
 - Add **tags** to organize, then filter by tag or by status (All / Active / Completed).
+- Create category columns, rename them, change their color, reorder them, and move tasks between columns.
 - Switch between **Light**, **Mixed**, and **Dark** themes from settings.
 - Available in **English** and **Spanish**.
 
 Everything saves to your browser automatically.
 
 ## Releases
+
+- **v1.9.0**:
+  - Added glass-style category columns with horizontal scrolling on mobile.
+  - Added category creation, renaming, color changes, deletion, and reordering.
+  - Added moving and reordering tasks across categories.
 
 - **v1.8.0 (Current Release)**:
   - Added "Delete all" button (🗑) with a confirmation dialog.
