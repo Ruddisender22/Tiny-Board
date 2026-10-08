@@ -174,9 +174,8 @@
     position: sticky;
     top: 0;
     z-index: 30;
-    width: 100vw;
-    margin-left: calc(50% - 50vw);
-    padding: 0.65rem 1rem 0.55rem;
+    width: 100%;
+    padding: 0.65rem clamp(1.25rem, 4vw, 3rem) 0.55rem;
     background: hsl(var(--background) / 0.86);
     backdrop-filter: blur(18px);
   }
@@ -280,8 +279,13 @@
   .board-column-body {
     min-height: 180px;
   }
-  .column-dragging .board-column-body {
-    visibility: hidden;
+  .column-dragging {
+    cursor: grabbing;
+    will-change: transform;
+    /* A live blur over a tall, moving column is what made dragging stutter. */
+    backdrop-filter: none;
+    background: hsl(var(--column-bg) / 0.96);
+    box-shadow: 0 24px 56px hsl(var(--task-shadow) / 0.34), 0 0 0 2px hsl(var(--primary) / 0.35);
   }
   .board-column-empty-body {
     min-height: 12px;
@@ -375,7 +379,7 @@
   }
 
   .category-selection-glow:hover {
-    transform: translateY(-4px);
+    translate: 0 -4px;
     border-color: hsl(var(--primary) / 0.9);
     box-shadow: 0 0 0 2px hsl(var(--primary) / 0.3), 0 0 38px hsl(var(--primary) / 0.35);
   }

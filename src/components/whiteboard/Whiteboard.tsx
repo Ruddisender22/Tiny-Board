@@ -4,11 +4,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   DndContext,
   PointerSensor,
-  closestCenter,
   useSensor,
   useSensors,
+  CollisionDetection,
   DragEndEvent,
-  DragOverEvent,
   DragMoveEvent,
   DragStartEvent,
   DragOverlay,
@@ -16,7 +15,7 @@ import {
 } from "@dnd-kit/core";
 import { Github, X, HelpCircle, Settings, Sun, Moon, Cloud, Trash2, FolderPlus, MessageSquare, Plus } from "lucide-react";
 import { TaskCard, Task } from "./TaskCard";
-import { BoardColumn, Category } from "./BoardColumn";
+import { BoardColumn, Category, COLUMN_TRANSITION, COLUMN_DRAGGING_TRANSITION } from "./BoardColumn";
 import { CreateTaskFrame, CreateTaskFrameHandle } from "./CreateTaskFrame";
 import { TaskColor, DEFAULT_HUE } from "@/lib/taskColors";
 import {
@@ -37,9 +36,39 @@ const DEFAULT_COLUMN_WIDTH = 360;
 const MIN_COLUMN_WIDTH = 280;
 const MAX_COLUMN_WIDTH = 640;
 const CANVAS_GRID = 24;
-const CANVAS_PADDING = 0;
-const COLUMN_HEIGHT = 760;
+const COLUMN_GAP = 24;
+const ESTIMATED_COLUMN_HEIGHT = 160;
 const CATEGORY_DROP_PREFIX = "category-drop:";
+
+type Point = { x: number; y: number };
+type ColumnSize = { w: number; h: number };
+
+const getEventPoint = (event: Event | null | undefined): Point | null => {
+  if (!event) return null;
+  if ("touches" in event && (event as TouchEvent).touches?.length) {
+    const touch = (event as TouchEvent).touches[0];
+    return { x: touch.clientX, y: touch.clientY };
+  }
+  if ("clientX" in event) {
+    const pointer = event as MouseEvent;
+    return { x: pointer.clientX, y: pointer.clientY };
+  }
+  return null;
+};
+
+const rectContains = (rect: DOMRect, point: Point) =>
+  point.x >= rect.left && point.x <= rect.right && point.y >= rect.top && point.y <= rect.bottom;
+
+/** Which column (and which card inside it) a pointer is over; the card is the one the dragged task is inserted before. */
+const resolveDropTarget = (point: Point, excludeTaskId: string): { categoryId: string; taskId: string | null } | null => {
+  const columns = Array.from(document.querySelectorAll<HTMLElement>("[data-category-id]"));
+  const column = columns.find((element) => rectContains(element.getBoundingClientRect(), point));
+  if (!column?.dataset.categoryId) return null;
+  const cards = Array.from(column.querySelectorAll<HTMLElement>("[data-task-id]"))
+    .filter((element) => element.dataset.taskId !== excludeTaskId);
+  const target = cards.find((element) => element.getBoundingClientRect().bottom > point.y);
+  return { categoryId: column.dataset.categoryId, taskId: target?.dataset.taskId ?? null };
+};
 
 const DEFAULT_CATEGORY: Category = {
   id: "category-default",
@@ -332,9 +361,11 @@ export const Whiteboard = () => {
   const [fabOpen, setFabOpen] = useState(false);
   const [createNearPointer, setCreateNearPointer] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [dropTargetCategoryId, setDropTargetCategoryId] = useState<string | null>(null);
+  const [draggingColumnId, setDraggingColumnId] = useState<string | null>(null);
+  const [settlingColumnId, setSettlingColumnId] = useState<string | null>(null);
+  const [liveExtent, setLiveExtent] = useState<number | null>(null);
+  const [columnSizes, setColumnSizes] = useState<Record<string, ColumnSize>>({});
   const [pendingTask, setPendingTask] = useState<{ name: string; color: TaskColor; tags: string[] } | null>(null);
-  const [swappedCategoryId, setSwappedCategoryId] = useState<string | null>(null);
   const [dragPreviewCategoryId, setDragPreviewCategoryId] = useState<string | null>(null);
   const [dragPreviewTaskId, setDragPreviewTaskId] = useState<string | null>(null);
   const [filterTag, setFilterTag] = useState<string | null>(null);
@@ -351,12 +382,21 @@ export const Whiteboard = () => {
   const canvasRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<CreateTaskFrameHandle>(null);
   const categoryNameInputRef = useRef<HTMLInputElement>(null);
-  const dragStartPositionsRef = useRef<Record<string, { x: number; y: number }>>({});
-  const columnDropTargetRef = useRef<string | null>(null);
+  const columnElementsRef = useRef<Record<string, HTMLDivElement | null>>({});
+  const liveExtentRef = useRef(0);
+  const pointerRef = useRef<Point | null>(null);
   const createAnchorRef = useRef<HTMLDivElement>(null);
   const isTouch = useIsTouchDevice();
 
   const t = translations[lang];
+
+  // Latest values for the imperative column-drag code (kept in refs so its handlers stay stable).
+  const categoriesRef = useRef(categories);
+  categoriesRef.current = categories;
+  const columnSizesRef = useRef(columnSizes);
+  columnSizesRef.current = columnSizes;
+  const columnWidthsRef = useRef(columnWidths);
+  columnWidthsRef.current = columnWidths;
 
   // Apply theme to DOM
   useEffect(() => {
@@ -389,6 +429,29 @@ export const Whiteboard = () => {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [creating, helpOpen, settingsOpen]);
+
+  useEffect(() => {
+    if (!pendingTask) return;
+    const handleEscape = (e: KeyboardEvent) => { if (e.key === "Escape") setPendingTask(null); };
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [pendingTask]);
+
+  // Track the real pointer while a task is dragged (dnd-kit's own coordinates ignore window scrolling).
+  useEffect(() => {
+    if (!activeId) return;
+    const trackPointer = (e: PointerEvent) => { pointerRef.current = { x: e.clientX, y: e.clientY }; };
+    const trackTouch = (e: TouchEvent) => {
+      const point = getEventPoint(e);
+      if (point) pointerRef.current = point;
+    };
+    window.addEventListener("pointermove", trackPointer);
+    window.addEventListener("touchmove", trackTouch, { passive: true });
+    return () => {
+      window.removeEventListener("pointermove", trackPointer);
+      window.removeEventListener("touchmove", trackTouch);
+    };
+  }, [activeId]);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
@@ -451,6 +514,57 @@ export const Whiteboard = () => {
     setPendingTask(null);
   }, [addTaskToCategory, pendingTask]);
 
+  /* ── Column geometry ──────────────────────────────────────────────── */
+
+  const registerColumnElement = useCallback((id: string, element: HTMLDivElement | null) => {
+    columnElementsRef.current[id] = element;
+  }, []);
+
+  const handleColumnMeasure = useCallback((id: string, w: number, h: number) => {
+    setColumnSizes((prev) => (prev[id] && prev[id].w === w && prev[id].h === h ? prev : { ...prev, [id]: { w, h } }));
+  }, []);
+
+  const getColumnSize = useCallback((category: Category): ColumnSize => {
+    return columnSizesRef.current[category.id] ?? {
+      w: columnWidthsRef.current[category.id] ?? DEFAULT_COLUMN_WIDTH,
+      h: ESTIMATED_COLUMN_HEIGHT,
+    };
+  }, []);
+
+  /** Nearest position to (desiredX, desiredY) where a w×h column overlaps no other column. The canvas has no bottom limit. */
+  const findFreePosition = useCallback((id: string, w: number, h: number, desiredX: number, desiredY: number): Point => {
+    const canvasWidth = canvasRef.current?.clientWidth ?? window.innerWidth;
+    const maxX = Math.max(0, canvasWidth - w);
+    const clampX = (value: number) => Math.round(Math.min(maxX, Math.max(0, value)));
+    const clampY = (value: number) => Math.round(Math.max(0, value));
+    const others = categoriesRef.current
+      .filter((item) => item.id !== id)
+      .map((item) => {
+        const size = getColumnSize(item);
+        return { l: item.x, t: item.y, r: item.x + size.w, b: item.y + size.h };
+      });
+    const isFree = (x: number, y: number) =>
+      others.every((o) => !(x < o.r + COLUMN_GAP && x + w > o.l - COLUMN_GAP && y < o.b + COLUMN_GAP && y + h > o.t - COLUMN_GAP));
+
+    const startX = clampX(desiredX);
+    const startY = clampY(desiredY);
+    if (isFree(startX, startY)) return { x: startX, y: startY };
+
+    const xs = [startX, ...others.flatMap((o) => [o.r + COLUMN_GAP, o.l - w - COLUMN_GAP])].map(clampX);
+    const ys = [startY, ...others.flatMap((o) => [o.b + COLUMN_GAP, o.t - h - COLUMN_GAP])].map(clampY);
+    let best: Point | null = null;
+    let bestDistance = Infinity;
+    for (const x of xs) {
+      for (const y of ys) {
+        if (!isFree(x, y)) continue;
+        const distance = (x - startX) ** 2 + (y - startY) ** 2;
+        if (distance < bestDistance) { best = { x, y }; bestDistance = distance; }
+      }
+    }
+    // Always reachable: directly below the lowest column.
+    return best ?? { x: startX, y: clampY(Math.max(...others.map((o) => o.b)) + COLUMN_GAP) };
+  }, [getColumnSize]);
+
   const addCategory = useCallback(() => {
     setCategoryNameDraft("");
     setCategoryDialogOpen(true);
@@ -459,17 +573,31 @@ export const Whiteboard = () => {
   const createCategory = useCallback(() => {
     const trimmed = categoryNameDraft.trim();
     if (!trimmed) return;
+    const rightmost = categories.reduce<Point>(
+      (best, item) => {
+        const right = item.x + getColumnSize(item).w;
+        return right > best.x ? { x: right, y: item.y } : best;
+      },
+      { x: 0, y: CANVAS_GRID },
+    );
+    const spot = findFreePosition(
+      "",
+      DEFAULT_COLUMN_WIDTH,
+      ESTIMATED_COLUMN_HEIGHT,
+      categories.length ? rightmost.x + COLUMN_GAP : CANVAS_GRID,
+      rightmost.y,
+    );
     const category: Category = {
       id: crypto.randomUUID(),
       name: trimmed,
       color: DEFAULT_HUE,
-      x: 24 + (categories.length % 3) * 384,
-      y: 24 + Math.floor(categories.length / 3) * 48,
+      x: spot.x,
+      y: spot.y,
     };
     setCategories((prev) => [...prev, category]);
     setCategoryNameDraft("");
     setCategoryDialogOpen(false);
-  }, [categoryNameDraft]);
+  }, [categoryNameDraft, categories, getColumnSize, findFreePosition]);
 
   const renameCategory = useCallback((id: string, name: string) => {
     setCategories((prev) => prev.map((category) => category.id === id ? { ...category, name } : category));
@@ -525,98 +653,242 @@ export const Whiteboard = () => {
     setConfirmDeleteAll(false);
   }, []);
 
-  const columnRect = (category: Category, x = category.x, y = category.y) => ({
-    left: x,
-    top: y,
-    right: x + (columnWidths[category.id] ?? DEFAULT_COLUMN_WIDTH),
-    bottom: y + COLUMN_HEIGHT,
-  });
-
-  const overlapsColumn = (candidate: ReturnType<typeof columnRect>, other: ReturnType<typeof columnRect>) =>
-    candidate.left < other.right && candidate.right > other.left &&
-    candidate.top < other.bottom && candidate.bottom > other.top;
-
-  const getCanvasBounds = (category: Category) => {
-    const canvas = canvasRef.current;
-    const availableWidth = canvas?.clientWidth ?? window.innerWidth;
-    const lowestColumn = Math.max(...categories.map((item) => item.y + COLUMN_HEIGHT), COLUMN_HEIGHT);
-    const availableHeight = Math.max(canvas?.scrollHeight ?? 0, lowestColumn + CANVAS_PADDING * 2);
-    return {
-      maxX: Math.max(CANVAS_PADDING, availableWidth - (columnWidths[category.id] ?? DEFAULT_COLUMN_WIDTH) - CANVAS_PADDING),
-      maxY: Math.max(CANVAS_PADDING, availableHeight - COLUMN_HEIGHT - CANVAS_PADDING),
-    };
-  };
-
-  const resolveColumnPosition = (category: Category, x: number, y: number) => {
-    const bounds = getCanvasBounds(category);
-    const clamp = (value: number, max: number) => Math.min(max, Math.max(CANVAS_PADDING, Math.round(value / CANVAS_GRID) * CANVAS_GRID));
-    const baseX = clamp(x, bounds.maxX);
-    const baseY = clamp(y, bounds.maxY);
-    const others = categories.filter((other) => other.id !== category.id).map((other) => columnRect(other));
-    const isFree = (candidateX: number, candidateY: number) => {
-      const candidate = columnRect(category, candidateX, candidateY);
-      return !others.some((other) => overlapsColumn(candidate, other));
-    };
-    if (isFree(baseX, baseY)) return { x: baseX, y: baseY };
-    for (let radius = 1; radius <= 12; radius += 1) {
-      for (let offset = -radius; offset <= radius; offset += 1) {
-        const candidates = [
-          [baseX + offset * CANVAS_GRID, baseY - radius * CANVAS_GRID],
-          [baseX + offset * CANVAS_GRID, baseY + radius * CANVAS_GRID],
-          [baseX - radius * CANVAS_GRID, baseY + offset * CANVAS_GRID],
-          [baseX + radius * CANVAS_GRID, baseY + offset * CANVAS_GRID],
-        ];
-        for (const [candidateX, candidateY] of candidates) {
-          const nextX = clamp(candidateX, bounds.maxX);
-          const nextY = clamp(candidateY, bounds.maxY);
-          if (isFree(nextX, nextY)) return { x: nextX, y: nextY };
+  // When a column grows (more tasks, filters, resizing) push the columns it now overlaps downwards instead of covering them.
+  useEffect(() => {
+    if (draggingColumnId || settlingColumnId) return;
+    if (!categories.every((item) => columnSizes[item.id])) return;
+    const sorted = [...categories].sort((a, b) => a.y - b.y || a.x - b.x);
+    const placed: { x: number; y: number; w: number; h: number }[] = [];
+    const nextY: Record<string, number> = {};
+    for (const item of sorted) {
+      const { w, h } = columnSizes[item.id];
+      let y = item.y;
+      let moved = true;
+      while (moved) {
+        moved = false;
+        for (const other of placed) {
+          if (item.x < other.x + other.w && item.x + w > other.x && y < other.y + other.h && y + h > other.y) {
+            y = other.y + other.h + COLUMN_GAP;
+            moved = true;
+          }
         }
       }
+      placed.push({ x: item.x, y, w, h });
+      if (y !== item.y) nextY[item.id] = y;
     }
-    return { x: category.x, y: category.y };
-  };
+    if (Object.keys(nextY).length > 0) {
+      setCategories((items) => items.map((item) => (nextY[item.id] !== undefined ? { ...item, y: nextY[item.id] } : item)));
+    }
+  }, [categories, columnSizes, draggingColumnId, settlingColumnId]);
+
+  /* ── Free column dragging (pointer based, moves the DOM node directly for smoothness) ── */
+
+  const columnDrag = useMemo(() => {
+    type DragState = {
+      id: string;
+      element: HTMLDivElement;
+      pointerId: number;
+      touch: boolean;
+      started: boolean;
+      clientX: number;
+      clientY: number;
+      startPageX: number;
+      startPageY: number;
+      startX: number;
+      startY: number;
+      curX: number;
+      curY: number;
+      w: number;
+      h: number;
+      timer: number;
+    };
+    let state: DragState | null = null;
+    let moveFrame = 0;
+    let scrollFrame = 0;
+
+    const place = (x: number, y: number) => `translate3d(${x}px, ${y}px, 0)`;
+    const snap = (value: number) => Math.round(value / CANVAS_GRID) * CANVAS_GRID;
+
+    const applyPosition = () => {
+      if (!state || !state.started) return;
+      const canvasWidth = canvasRef.current?.clientWidth ?? window.innerWidth;
+      const pageX = state.clientX + window.scrollX;
+      const pageY = state.clientY + window.scrollY;
+      state.curX = Math.min(Math.max(0, canvasWidth - state.w), Math.max(0, state.startX + pageX - state.startPageX));
+      state.curY = Math.max(0, state.startY + pageY - state.startPageY);
+      state.element.style.transform = place(state.curX, state.curY);
+      // The canvas keeps expanding below the column while it is being dragged downwards.
+      const extent = Math.ceil((state.curY + state.h + 240) / 100) * 100;
+      if (extent > liveExtentRef.current) {
+        liveExtentRef.current = extent;
+        setLiveExtent(extent);
+      }
+    };
+
+    const autoScroll = () => {
+      if (!state || !state.started) return;
+      const stripBottom = document.querySelector<HTMLElement>(".app-top-strip")?.getBoundingClientRect().bottom ?? 0;
+      const bottomEdge = window.innerHeight - 90;
+      const topEdge = stripBottom + 48;
+      let delta = 0;
+      if (state.clientY > bottomEdge) delta = Math.min(26, (state.clientY - bottomEdge) / 3 + 4);
+      else if (state.clientY < topEdge && window.scrollY > 0) delta = -Math.min(26, (topEdge - state.clientY) / 3 + 4);
+      if (delta !== 0) {
+        window.scrollBy(0, delta);
+        applyPosition();
+      }
+      scrollFrame = requestAnimationFrame(autoScroll);
+    };
+
+    const removeListeners = () => {
+      window.removeEventListener("pointermove", handleMove);
+      window.removeEventListener("pointerup", handleUp);
+      window.removeEventListener("pointercancel", handleCancel);
+      window.removeEventListener("touchmove", blockTouchScroll);
+      if (state) window.clearTimeout(state.timer);
+      cancelAnimationFrame(moveFrame);
+    };
+
+    const begin = () => {
+      if (!state || state.started) return;
+      state.started = true;
+      state.element.style.transition = COLUMN_DRAGGING_TRANSITION;
+      document.body.style.userSelect = "none";
+      document.body.style.cursor = "grabbing";
+      window.getSelection()?.removeAllRanges();
+      setDraggingColumnId(state.id);
+      scrollFrame = requestAnimationFrame(autoScroll);
+    };
+
+    const blockTouchScroll = (event: TouchEvent) => {
+      if (state?.started && event.cancelable) event.preventDefault();
+    };
+
+    function handleMove(event: PointerEvent) {
+      if (!state || event.pointerId !== state.pointerId) return;
+      state.clientX = event.clientX;
+      state.clientY = event.clientY;
+      if (!state.started) {
+        const distance = Math.hypot(
+          event.clientX + window.scrollX - state.startPageX,
+          event.clientY + window.scrollY - state.startPageY,
+        );
+        if (state.touch) {
+          // Touch needs a long press first; moving before that means the user is scrolling.
+          if (distance > 8) { removeListeners(); state = null; }
+          return;
+        }
+        if (distance < 4) return;
+        begin();
+      }
+      cancelAnimationFrame(moveFrame);
+      moveFrame = requestAnimationFrame(applyPosition);
+    }
+
+    const finish = (cancelled: boolean) => {
+      const current = state;
+      if (!current) return;
+      removeListeners();
+      state = null;
+      if (!current.started) return;
+      cancelAnimationFrame(scrollFrame);
+      document.body.style.userSelect = "";
+      document.body.style.cursor = "";
+
+      let target: Point = { x: current.startX, y: current.startY };
+      if (!cancelled) {
+        state = current;
+        applyPosition();
+        state = null;
+        target = findFreePosition(current.id, current.w, current.h, snap(current.curX), snap(current.curY));
+      }
+      // Glide from wherever the column was released to its final spot (set directly so React and the DOM agree).
+      current.element.style.transition = COLUMN_TRANSITION;
+      current.element.style.transform = place(target.x, target.y);
+      setCategories((items) => items.map((item) => (item.id === current.id ? { ...item, x: target.x, y: target.y } : item)));
+      setDraggingColumnId(null);
+      setSettlingColumnId(current.id);
+      liveExtentRef.current = 0;
+      setLiveExtent(null);
+      window.setTimeout(() => setSettlingColumnId((id) => (id === current.id ? null : id)), 360);
+
+      // The release must not count as a click on whatever is under the pointer (rename on touch, category selection…).
+      const swallowClick = (event: MouseEvent) => { event.stopPropagation(); event.preventDefault(); };
+      window.addEventListener("click", swallowClick, true);
+      window.setTimeout(() => window.removeEventListener("click", swallowClick, true), 80);
+    };
+
+    function handleUp(event: PointerEvent) {
+      if (state && event.pointerId === state.pointerId) finish(false);
+    }
+    function handleCancel(event: PointerEvent) {
+      if (state && event.pointerId === state.pointerId) finish(true);
+    }
+
+    const start = (id: string, event: React.PointerEvent<HTMLElement>) => {
+      if (state) return;
+      if (event.pointerType === "mouse" && event.button !== 0) return;
+      const category = categoriesRef.current.find((item) => item.id === id);
+      const element = columnElementsRef.current[id];
+      if (!category || !element) return;
+      const touch = event.pointerType !== "mouse";
+      state = {
+        id,
+        element,
+        pointerId: event.pointerId,
+        touch,
+        started: false,
+        clientX: event.clientX,
+        clientY: event.clientY,
+        startPageX: event.clientX + window.scrollX,
+        startPageY: event.clientY + window.scrollY,
+        startX: category.x,
+        startY: category.y,
+        curX: category.x,
+        curY: category.y,
+        w: element.offsetWidth,
+        h: element.offsetHeight,
+        timer: 0,
+      };
+      window.addEventListener("pointermove", handleMove);
+      window.addEventListener("pointerup", handleUp);
+      window.addEventListener("pointercancel", handleCancel);
+      if (touch) {
+        window.addEventListener("touchmove", blockTouchScroll, { passive: false });
+        state.timer = window.setTimeout(begin, 250);
+      }
+    };
+
+    return { start };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [findFreePosition]);
+
+  /* ── Task drag & drop ─────────────────────────────────────────────── */
+
+  // Pointer based: the column under the pointer, and the card the pointer is above (insert before it) or the column end.
+  const collisionDetection = useCallback<CollisionDetection>(({ droppableContainers, pointerCoordinates, active }) => {
+    const point = pointerRef.current ?? pointerCoordinates;
+    if (!point) return [];
+    const target = resolveDropTarget(point, String(active.id));
+    if (!target) return [];
+    const wantedId = target.taskId ?? `${CATEGORY_DROP_PREFIX}${target.categoryId}`;
+    const container = droppableContainers.find((item) => String(item.id) === wantedId);
+    return container ? [{ id: container.id, data: { droppableContainer: container, value: 0 } }] : [];
+  }, []);
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveId(null);
-    setDropTargetCategoryId(null);
     setDragPreviewCategoryId(null);
     setDragPreviewTaskId(null);
-    if (categories.some((category) => category.id === active.id)) {
-      const activeCategory = categories.find((category) => category.id === active.id);
-      if (!activeCategory) return;
-      const targetId = columnDropTargetRef.current;
-      if (targetId && targetId !== activeCategory.id) {
-        setCategories((items) => {
-          const target = items.find((category) => category.id === targetId);
-          if (!target) return items;
-          return items.map((category) => {
-            if (category.id === activeCategory.id) return { ...category, x: target.x, y: target.y };
-            if (category.id === targetId) return { ...category, x: activeCategory.x, y: activeCategory.y };
-            return category;
-          });
-        });
-        setSwappedCategoryId(targetId);
-        window.setTimeout(() => setSwappedCategoryId(null), 700);
-      } else {
-        const start = dragStartPositionsRef.current[String(active.id)] ?? activeCategory;
-        const next = resolveColumnPosition(activeCategory, start.x + event.delta.x, start.y + event.delta.y);
-        setCategories((items) => items.map((category) => category.id === active.id ? { ...category, ...next } : category));
-      }
-      columnDropTargetRef.current = null;
-      dragStartPositionsRef.current = {};
-      return;
-    }
-
     if (!over || active.id === over.id) return;
 
-    const overCategoryId = String(over.id).startsWith(CATEGORY_DROP_PREFIX)
-      ? String(over.id).slice(CATEGORY_DROP_PREFIX.length)
-      : categories.some((category) => category.id === over.id) ? String(over.id) : null;
+    const overId = String(over.id);
+    const overCategoryId = overId.startsWith(CATEGORY_DROP_PREFIX) ? overId.slice(CATEGORY_DROP_PREFIX.length) : null;
     setTasks((items) => {
       const movingTask = items.find((task) => task.id === active.id);
       if (!movingTask) return items;
-      const targetTask = items.find((task) => task.id === over.id);
+      const targetTask = overCategoryId ? undefined : items.find((task) => task.id === overId);
       const targetCategoryId = overCategoryId ?? targetTask?.categoryId;
       if (!targetCategoryId) return items;
 
@@ -624,67 +896,28 @@ export const Whiteboard = () => {
       const targetIndex = targetTask
         ? remaining.findIndex((task) => task.id === targetTask.id)
         : remaining.reduce((lastIndex, task, index) => task.categoryId === targetCategoryId ? index : lastIndex, -1) + 1;
-      const next = { ...movingTask, categoryId: targetCategoryId };
-      remaining.splice(Math.max(0, targetIndex), 0, next);
+      remaining.splice(Math.max(0, targetIndex), 0, { ...movingTask, categoryId: targetCategoryId });
       return remaining;
     });
   };
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(String(event.active.id));
-    setSwappedCategoryId(null);
     const activeTask = tasks.find((task) => task.id === event.active.id);
     setDragPreviewCategoryId(activeTask?.categoryId ?? null);
     setDragPreviewTaskId(null);
-    const activeCategory = categories.find((category) => category.id === event.active.id);
-    if (activeCategory) dragStartPositionsRef.current = { [activeCategory.id]: { x: activeCategory.x, y: activeCategory.y } };
-    columnDropTargetRef.current = null;
-  };
-
-  const handleDragOver = (event: DragOverEvent) => {
-    const { active, over } = event;
-    if (!over) {
-      setDropTargetCategoryId(null);
-      setDragPreviewCategoryId(null);
-      return;
-    }
-    const overId = String(over.id);
-    const targetCategoryId = overId.startsWith(CATEGORY_DROP_PREFIX)
-      ? overId.slice(CATEGORY_DROP_PREFIX.length)
-      : categories.some((category) => category.id === over.id)
-        ? overId
-        : tasks.find((task) => task.id === over.id)?.categoryId ?? null;
-    if (categories.some((category) => category.id === active.id)) {
-      setDropTargetCategoryId(targetCategoryId === active.id ? null : targetCategoryId);
-    }
+    pointerRef.current = getEventPoint(event.activatorEvent);
   };
 
   const handleDragMove = (event: DragMoveEvent) => {
-    if (categories.some((category) => category.id === event.active.id)) {
-      const translated = event.active.rect.current.translated;
-      if (!translated) return;
-      const canvasRect = canvasRef.current?.getBoundingClientRect();
-      if (!canvasRect) return;
-      const pointerX = translated.left + translated.width / 2 - canvasRect.left;
-      const pointerY = translated.top + translated.height / 2 - canvasRect.top;
-      const targetId = categories.find((category) => {
-        if (category.id === String(event.active.id)) return false;
-        const rect = columnRect(category);
-        return pointerX >= rect.left && pointerX <= rect.right && pointerY >= rect.top && pointerY <= rect.bottom;
-      })?.id ?? null;
-      columnDropTargetRef.current = targetId === String(event.active.id) ? null : targetId;
-      setDropTargetCategoryId(columnDropTargetRef.current);
-      return;
-    }
-    const translated = event.active.rect.current.translated;
-    if (!translated) return;
-    const centerX = translated.left + translated.width / 2;
-    const centerY = translated.top + translated.height / 2;
-    const element = document.elementFromPoint(centerX, centerY);
-    const categoryElement = element?.closest<HTMLElement>("[data-category-id]");
-    const taskElement = element?.closest<HTMLElement>("[data-task-id]");
-    setDragPreviewCategoryId(categoryElement?.dataset.categoryId ?? null);
-    setDragPreviewTaskId(taskElement?.dataset.taskId === String(event.active.id) ? null : taskElement?.dataset.taskId ?? null);
+    const point = pointerRef.current ?? (() => {
+      const origin = getEventPoint(event.activatorEvent);
+      return origin ? { x: origin.x + event.delta.x, y: origin.y + event.delta.y } : null;
+    })();
+    if (!point) return;
+    const target = resolveDropTarget(point, String(event.active.id));
+    setDragPreviewCategoryId(target?.categoryId ?? null);
+    setDragPreviewTaskId(target?.taskId ?? null);
   };
 
   const handleBoardMouseMove = (event: React.MouseEvent) => {
@@ -709,6 +942,8 @@ export const Whiteboard = () => {
     frameRef.current?.submit();
   };
 
+  const activeTaskCategoryId = activeId ? tasks.find((task) => task.id === activeId)?.categoryId ?? null : null;
+
   const statusLabels: { key: StatusFilter; label: string }[] = [
     { key: "all", label: t.all },
     { key: "active", label: t.active },
@@ -731,7 +966,7 @@ export const Whiteboard = () => {
       className="relative z-10 min-h-screen w-full px-0 pb-32"
     >
       <div className="w-full">
-        <div className="app-top-strip">
+        <div className="app-top-strip" style={pendingTask ? { zIndex: 55 } : undefined}>
         <header className="mb-4 flex flex-col gap-3 border-b border-border/50 pb-4 md:flex-row md:items-end md:justify-between">
           <div>
             <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">{t.title}</h1>
@@ -739,11 +974,11 @@ export const Whiteboard = () => {
           </div>
 
           <div className="flex shrink-0 items-center gap-3 self-start md:self-auto">
-            <span className="hidden text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/60 sm:inline">{t.view}</span>
-            <div className="flex items-center gap-1 rounded-xl border border-border/70 bg-muted/70 p-1 shadow-sm backdrop-blur">
+            <span className="hidden text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/60 sm:inline">{t.view}</span>
+            <div className="flex items-center gap-1.5 rounded-2xl border border-border/70 bg-muted/70 p-1.5 shadow-sm backdrop-blur">
               {statusLabels.map(({ key, label }) => (
                 <button key={key} type="button" onClick={() => setStatusFilter(key)}
-                  className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all sm:px-4 ${
+                  className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition-all sm:px-6 sm:py-3 sm:text-base ${
                     statusFilter === key ? "bg-card text-card-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                   }`}
                 >{label}</button>
@@ -775,48 +1010,44 @@ export const Whiteboard = () => {
           </div>
         )}
 
-        <div className="mb-3 flex items-center gap-3">
-          <div className="flex items-center gap-3">
-            <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground/70">{t.categories}</span>
-            <span className="text-xs text-muted-foreground/50">{categories.length}</span>
+        {pendingTask ? (
+          <div className="mb-3 flex flex-col items-center gap-2">
+            <p className="pending-task-message rounded-full border border-primary/25 bg-card/90 px-4 py-2 text-center text-xs font-semibold text-card-foreground shadow-lg backdrop-blur-xl">{t.chooseCategory}</p>
+            <div className="pointer-events-none w-[min(420px,100%)]">
+              <TaskCard
+                task={{ id: "pending-create", name: pendingTask.name, color: pendingTask.color, completed: false, tags: pendingTask.tags, categoryId: "" }}
+                onToggle={() => {}}
+                onDelete={() => {}}
+                onRename={() => {}}
+                onAddTag={() => {}}
+                onRemoveTag={() => {}}
+                onChangeColor={() => {}}
+                overlay
+                fullColor={fullColor}
+                lang={lang}
+              />
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="mb-3 flex items-center gap-3">
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground/70">{t.categories}</span>
+              <span className="text-xs text-muted-foreground/50">{categories.length}</span>
+            </div>
+          </div>
+        )}
         </div>
 
-        <DndContext sensors={sensors} collisionDetection={closestCenter}
-          onDragStart={handleDragStart} onDragMove={handleDragMove} onDragOver={handleDragOver} onDragEnd={handleDragEnd}
-          onDragCancel={() => { setActiveId(null); setDropTargetCategoryId(null); setDragPreviewCategoryId(null); setDragPreviewTaskId(null); setSwappedCategoryId(null); columnDropTargetRef.current = null; dragStartPositionsRef.current = {}; }}
+        <DndContext sensors={sensors} collisionDetection={collisionDetection}
+          onDragStart={handleDragStart} onDragMove={handleDragMove} onDragEnd={handleDragEnd}
+          onDragCancel={() => { setActiveId(null); setDragPreviewCategoryId(null); setDragPreviewTaskId(null); }}
         >
           {pendingTask && (
-            <>
-              <motion.div
-                className="fixed inset-0 z-40 bg-background/60 backdrop-blur-sm"
-                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                onClick={() => setPendingTask(null)}
-              />
-              <motion.div
-                className="pointer-events-none fixed inset-0 z-[60] flex items-start justify-center px-4 pt-28 sm:pt-32"
-                initial={{ opacity: 0, y: -12, scale: 0.94 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -12, scale: 0.94 }}
-              >
-                <div className="flex w-[min(420px,calc(100vw-2rem))] flex-col items-center gap-3">
-                  <p className="pending-task-message rounded-full border border-primary/25 bg-card/90 px-4 py-2 text-center text-xs font-semibold text-card-foreground shadow-lg backdrop-blur-xl">{t.chooseCategory}</p>
-                  <TaskCard
-                  task={{ id: "pending-create", name: pendingTask.name, color: pendingTask.color, completed: false, tags: pendingTask.tags, categoryId: "" }}
-                  onToggle={() => {}}
-                  onDelete={() => {}}
-                  onRename={() => {}}
-                  onAddTag={() => {}}
-                  onRemoveTag={() => {}}
-                  onChangeColor={() => {}}
-                  overlay
-                  fullColor={fullColor}
-                    lang={lang}
-                  />
-                </div>
-              </motion.div>
-            </>
+            <motion.div
+              className="fixed inset-0 z-40 bg-background/60 backdrop-blur-sm"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+              onClick={() => setPendingTask(null)}
+            />
           )}
           <div ref={createAnchorRef} className={`create-task-anchor ${creating ? "is-active" : ""}`}>
             <div className="min-w-0 flex-1">
@@ -831,7 +1062,15 @@ export const Whiteboard = () => {
             <div
               ref={canvasRef}
               className="whiteboard-canvas relative w-full pb-32"
-              style={{ minHeight: Math.max(window.innerHeight - 220, ...categories.map((category) => category.y + COLUMN_HEIGHT + 48)) }}
+              style={{
+                minHeight: Math.max(
+                  window.innerHeight - 220,
+                  ...categories.map((category) => category.y + getColumnSize(category).h + 120),
+                  liveExtent ?? 0,
+                ),
+                zIndex: pendingTask ? 50 : undefined,
+              }}
+              onClick={() => { if (pendingTask) setPendingTask(null); }}
             >
               {categories.map((category) => (
                 <BoardColumn
@@ -840,8 +1079,12 @@ export const Whiteboard = () => {
                   category={category}
                   x={category.x}
                   y={category.y}
-                  dropTarget={dropTargetCategoryId === category.id}
-                  swapPulse={swappedCategoryId === category.id}
+                  dropTarget={Boolean(activeId) && dragPreviewCategoryId === category.id && activeTaskCategoryId !== category.id}
+                  dragging={draggingColumnId === category.id}
+                  raised={draggingColumnId === category.id || settlingColumnId === category.id}
+                  onHeaderPointerDown={columnDrag.start}
+                  registerElement={registerColumnElement}
+                  onMeasure={handleColumnMeasure}
                   isSingleColumn={categories.length === 1}
                   width={columnWidths[category.id] ?? DEFAULT_COLUMN_WIDTH}
                   minWidth={MIN_COLUMN_WIDTH}
@@ -867,8 +1110,6 @@ export const Whiteboard = () => {
           </div>
           <DragOverlay dropAnimation={{ duration: 200, easing: "cubic-bezier(0.18, 0.67, 0.6, 1.22)" }}>
             {activeId ? (() => {
-              const activeCategory = categories.find((category) => category.id === activeId);
-              if (activeCategory) return null;
               const t = tasks.find((x) => x.id === activeId);
               if (!t) return null;
               const previewWidth = columnWidths[dragPreviewCategoryId ?? t.categoryId] ?? DEFAULT_COLUMN_WIDTH;

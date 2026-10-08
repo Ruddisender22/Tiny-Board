@@ -54,6 +54,16 @@ export const translations = {
     deleteAllConfirm: "Delete all tasks? This cannot be undone.",
     changelogEntries: [
       {
+        version: "1.25.0",
+        changes: [
+          "Tasks can now be dropped into empty columns from any other column",
+          "Category selection when creating a task is visible and clickable again",
+          "Columns move smoothly, glide into place on release and stay where you drop them",
+          "The canvas grows as needed; growing columns push those below them instead of covering them",
+          "Top bar now has side margins and larger All / Active / Completed buttons",
+        ],
+      },
+      {
         version: "1.24.0",
         changes: [
           "Empty columns now accept dragged tasks as drop targets",
@@ -301,6 +311,16 @@ export const translations = {
     deleteAll: "Eliminar todo",
     deleteAllConfirm: "¿Eliminar todas las tareas? Esto no se puede deshacer.",
     changelogEntries: [
+      {
+        version: "1.25.0",
+        changes: [
+          "Ahora se pueden soltar tareas en columnas vacías desde cualquier otra columna",
+          "La selección de categoría al crear una tarea vuelve a verse y se puede pulsar",
+          "Las columnas se mueven con suavidad, se deslizan a su sitio al soltarlas y se quedan donde las sueltas",
+          "La pizarra crece según haga falta; las columnas que crecen empujan a las de debajo en vez de taparlas",
+          "La barra superior tiene márgenes laterales y botones Todas / Activas / Completadas más grandes",
+        ],
+      },
       {
         version: "1.24.0",
         changes: [

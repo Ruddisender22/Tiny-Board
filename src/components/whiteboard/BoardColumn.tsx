@@ -1,10 +1,9 @@
-import { useDraggable, useDroppable } from "@dnd-kit/core";
+import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 import { TaskCard, Task } from "./TaskCard";
 import { TaskColor, colorVar, colorVarSoft } from "@/lib/taskColors";
 import { X } from "lucide-react";
-import { useState, useRef, useEffect, KeyboardEvent } from "react";
+import { useState, useRef, useEffect, useCallback, KeyboardEvent, PointerEvent as ReactPointerEvent } from "react";
 import { ColorPicker } from "./ColorPicker";
 import { Lang, translations } from "@/lib/i18n";
 import { cn, useIsTouchDevice } from "@/lib/utils";
@@ -14,14 +13,26 @@ export interface Category {
   id: string;
   name: string;
   color: TaskColor;
+  x: number;
+  y: number;
 }
+
+export const COLUMN_TRANSITION =
+  "transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.2s ease, border-color 0.2s ease, translate 0.2s ease";
+export const COLUMN_DRAGGING_TRANSITION = "box-shadow 0.2s ease, border-color 0.2s ease";
 
 interface BoardColumnProps {
   category: Category;
   tasks: Task[];
   dropTarget: boolean;
-  swapPulse: boolean;
+  /** True while this column is being moved on the canvas. */
+  dragging: boolean;
+  /** True while this column is being moved or settling into place. */
+  raised: boolean;
   isSingleColumn: boolean;
+  onHeaderPointerDown: (id: string, event: ReactPointerEvent<HTMLElement>) => void;
+  registerElement: (id: string, element: HTMLDivElement | null) => void;
+  onMeasure: (id: string, width: number, height: number) => void;
   dataCategoryId: string;
   x: number;
   y: number;
@@ -52,8 +63,12 @@ export const BoardColumn = ({
   category,
   tasks,
   dropTarget,
-  swapPulse,
+  dragging,
+  raised,
   isSingleColumn,
+  onHeaderPointerDown,
+  registerElement,
+  onMeasure,
   dataCategoryId,
   x,
   y,
@@ -79,25 +94,38 @@ export const BoardColumn = ({
   const t = translations[lang];
   const isTouch = useIsTouchDevice();
   
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-    id: category.id,
-    data: {
-      type: "Column",
-      category,
-    },
-  });
-  const { setNodeRef: setBodyNodeRef } = useDroppable({
+  const { setNodeRef: setDropRef } = useDroppable({
     id: `category-drop:${category.id}`,
     data: { categoryId: category.id },
   });
-  
+  const columnRef = useRef<HTMLDivElement | null>(null);
+  const setRefs = useCallback((node: HTMLDivElement | null) => {
+    columnRef.current = node;
+    setDropRef(node);
+    registerElement(category.id, node);
+  }, [setDropRef, registerElement, category.id]);
+
+  // Report the real rendered size so the canvas can place and expand columns accurately.
+  useEffect(() => {
+    const element = columnRef.current;
+    if (!element) return;
+    const report = () => onMeasure(category.id, element.offsetWidth, element.offsetHeight);
+    report();
+    const observer = new ResizeObserver(report);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [category.id, onMeasure]);
+
   const style = {
-    left: x,
-    top: y,
-    transform: CSS.Translate.toString(transform),
-    zIndex: isDragging ? 80 : undefined,
+    left: 0,
+    top: 0,
+    transform: `translate3d(${x}px, ${y}px, 0)`,
+    transition: dragging ? COLUMN_DRAGGING_TRANSITION : COLUMN_TRANSITION,
+    zIndex: raised ? 70 : undefined,
+    width: isSingleColumn ? `min(760px, calc(100% - ${Math.round(x) + 24}px))` : width,
+    minWidth: isSingleColumn ? 0 : minWidth,
   };
-  
+
   const [editing, setEditing] = useState(false);
   const [nameDraft, setNameDraft] = useState(category.name);
   const nameInputRef = useRef<HTMLInputElement>(null);
@@ -152,25 +180,30 @@ export const BoardColumn = ({
   };
   
   return (
-    <motion.div
-      ref={setNodeRef}
+    <div
+      ref={setRefs}
       data-category-id={dataCategoryId}
-      style={{ ...style, width: isSingleColumn ? "100%" : width, minWidth: isSingleColumn ? 0 : minWidth }}
+      style={style}
       className={cn(
-        "board-column absolute flex flex-col rounded-2xl max-h-[80vh] flex-shrink-0 transition-[box-shadow,border-color]",
+        "board-column absolute flex flex-col rounded-2xl flex-shrink-0",
         isSingleColumn && "board-column-single",
-        isDragging && "column-dragging z-50 opacity-100 will-change-transform",
-        dropTarget && !isDragging && "category-drop-glow",
-        swapPulse && "category-swap-pulse",
-        selectionMode && "category-selection-glow relative z-50 cursor-pointer"
+        dragging && "column-dragging",
+        dropTarget && !dragging && "category-drop-glow",
+        selectionMode && "category-selection-glow cursor-pointer"
       )}
-      onClick={() => selectionMode && onSelectCategory(category.id)}
+      onClick={(event) => {
+        if (!selectionMode) return;
+        event.stopPropagation();
+        onSelectCategory(category.id);
+      }}
     >
       {/* Column Header */}
       <div 
-        className="board-column-header flex items-center gap-3 rounded-t-2xl border-b p-4 cursor-grab active:cursor-grabbing transition-colors group"
-        {...attributes}
-        {...listeners}
+        className={cn(
+          "board-column-header flex items-center gap-3 rounded-t-2xl border-b p-4 cursor-grab active:cursor-grabbing transition-colors group select-none",
+          selectionMode && "pointer-events-none"
+        )}
+        onPointerDown={(event) => onHeaderPointerDown(category.id, event)}
       >
         <ColorPicker
           hue={category.color}
@@ -249,14 +282,18 @@ export const BoardColumn = ({
           event.stopPropagation();
           resizeRef.current = { startX: event.clientX, startWidth: width };
         }}
-        className="absolute right-0 top-3 bottom-3 z-10 w-2 cursor-ew-resize rounded-full opacity-40 transition-opacity hover:bg-primary/40 sm:opacity-0 sm:group-hover:opacity-100"
+        className={cn(
+          "absolute right-0 top-3 bottom-3 z-10 w-2 cursor-ew-resize rounded-full opacity-40 transition-opacity hover:bg-primary/40 sm:opacity-0 sm:group-hover:opacity-100",
+          selectionMode && "pointer-events-none"
+        )}
       />
       
       {/* Column Body */}
-      <div ref={setBodyNodeRef} className={cn(
+      <div className={cn(
         "board-column-body flex flex-col gap-3 p-3",
         tasks.length === 0 && "board-column-empty-body",
-        isSingleColumn && "board-column-single-body"
+        isSingleColumn && "board-column-single-body",
+        selectionMode && "pointer-events-none"
       )} onPointerDown={(e) => e.stopPropagation()}>
         <SortableContext items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
           <AnimatePresence initial={false} mode="popLayout">
@@ -281,6 +318,6 @@ export const BoardColumn = ({
       </div>
       
       <div className="h-2 shrink-0 rounded-b-2xl bg-card-foreground/[0.03]" aria-hidden />
-    </motion.div>
+    </div>
   );
 };
