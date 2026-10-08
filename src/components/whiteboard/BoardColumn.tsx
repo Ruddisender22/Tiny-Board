@@ -144,7 +144,6 @@ export const BoardColumn = ({
     <motion.div
       ref={setNodeRef}
       data-category-id={dataCategoryId}
-      layout={!isDragging}
       style={{ ...style, width: isSingleColumn ? "100%" : width, minWidth: isSingleColumn ? 0 : minWidth }}
       className={cn(
         "board-column relative flex flex-col rounded-2xl max-h-[80vh] flex-shrink-0 transition-[box-shadow,border-color]",
@@ -154,7 +153,6 @@ export const BoardColumn = ({
         swapPulse && "category-swap-pulse",
         selectionMode && "category-selection-glow relative z-50 cursor-pointer"
       )}
-      transition={{ layout: { type: "spring", stiffness: 380, damping: 30 } }}
       onClick={() => selectionMode && onSelectCategory(category.id)}
     >
       {/* Column Header */}
