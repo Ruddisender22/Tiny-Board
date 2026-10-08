@@ -108,7 +108,7 @@ export const BoardColumn = ({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "flex flex-col bg-card/30 backdrop-blur-xl border border-white/20 shadow-xl rounded-2xl w-[320px] max-h-[80vh] flex-shrink-0 transition-opacity",
+        "flex flex-col bg-card/30 backdrop-blur-xl border border-white/20 shadow-xl rounded-2xl w-[86vw] sm:w-[340px] lg:w-auto lg:flex-[1_1_0%] lg:min-w-[300px] lg:max-w-[520px] max-h-[80vh] flex-shrink-0 transition-opacity",
         isDragging && "opacity-50"
       )}
     >

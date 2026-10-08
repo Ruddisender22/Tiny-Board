@@ -511,7 +511,7 @@ export const Whiteboard = () => {
       onClick={handleBoardClick}
       className="relative min-h-screen w-full px-4 py-12 sm:py-20 pb-32"
     >
-      <div className="mx-auto w-full max-w-2xl">
+      <div className="mx-auto w-full max-w-[1440px]">
         <header className="mb-10 text-center">
           <h1 className="text-4xl font-semibold tracking-tight text-foreground">{t.title}</h1>
           <p className="mt-2 text-sm text-muted-foreground">{t.subtitle}</p>
@@ -566,7 +566,7 @@ export const Whiteboard = () => {
           onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragCancel={() => setActiveId(null)}
         >
           {showCreateFrame && (
-            <div className="mb-5">
+            <div className="mx-auto mb-5 w-full max-w-2xl">
               <CreateTaskFrame ref={frameRef} visible={showCreateFrame} active={creating}
                 onActivate={() => setCreating(true)} onSubmit={addTask} onCancel={() => setCreating(false)}
                 lang={lang} isStuck={false}
@@ -574,7 +574,7 @@ export const Whiteboard = () => {
             </div>
           )}
           <SortableContext items={categories.map((category) => category.id)} strategy={horizontalListSortingStrategy}>
-            <div className="flex max-w-full gap-4 overflow-x-auto pb-5 snap-x snap-mandatory">
+            <div className="flex max-w-full items-stretch justify-center gap-4 overflow-x-auto pb-5 snap-x snap-mandatory">
               {categories.map((category) => (
                 <BoardColumn
                   key={category.id}
