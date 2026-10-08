@@ -53,6 +53,15 @@ export const translations = {
     deleteAllConfirm: "Delete all tasks? This cannot be undone.",
     changelogEntries: [
       {
+        version: "1.10.0",
+        changes: [
+          "Resizable columns with persisted widths",
+          "Animated column swaps with glow feedback",
+          "Color blocks in column headers and improved Light/Mixed theme contrast",
+          "Recent color grid shared by tasks, columns, and new tasks",
+        ],
+      },
+      {
         version: "1.8.0",
         changes: [
           "Added \"Delete all\" button to clear the board instantly",
@@ -193,6 +202,15 @@ export const translations = {
     deleteAll: "Eliminar todo",
     deleteAllConfirm: "¿Eliminar todas las tareas? Esto no se puede deshacer.",
     changelogEntries: [
+      {
+        version: "1.10.0",
+        changes: [
+          "Columnas redimensionables con anchos persistentes",
+          "Intercambio de columnas con animación y efecto glow",
+          "Bloques de color en cabeceras y mejor contraste en temas Claro y Mixto",
+          "Cuadrícula de colores recientes compartida por tareas, columnas y nuevas tareas",
+        ],
+      },
       {
         version: "1.8.0",
         changes: [

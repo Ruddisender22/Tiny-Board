@@ -7,7 +7,7 @@ import { useState, useRef, useEffect, KeyboardEvent } from "react";
 import { ColorPicker } from "./ColorPicker";
 import { Lang, translations } from "@/lib/i18n";
 import { cn, useIsTouchDevice } from "@/lib/utils";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 
 export interface Category {
   id: string;
@@ -19,6 +19,11 @@ interface BoardColumnProps {
   category: Category;
   tasks: Task[];
   dropTarget: boolean;
+  swapPulse: boolean;
+  width: number;
+  minWidth: number;
+  maxWidth: number;
+  onResize: (id: string, width: number) => void;
   onRenameCategory: (id: string, newName: string) => void;
   onDeleteCategory: (id: string) => void;
   onChangeCategoryColor: (id: string, color: TaskColor) => void;
@@ -40,6 +45,11 @@ export const BoardColumn = ({
   category,
   tasks,
   dropTarget,
+  swapPulse,
+  width,
+  minWidth,
+  maxWidth,
+  onResize,
   onRenameCategory,
   onDeleteCategory,
   onChangeCategoryColor,
@@ -72,6 +82,7 @@ export const BoardColumn = ({
   const [editing, setEditing] = useState(false);
   const [nameDraft, setNameDraft] = useState(category.name);
   const nameInputRef = useRef<HTMLInputElement>(null);
+  const resizeRef = useRef<{ startX: number; startWidth: number } | null>(null);
 
   useEffect(() => {
     if (!editing) setNameDraft(category.name);
@@ -83,6 +94,23 @@ export const BoardColumn = ({
       nameInputRef.current.select();
     }
   }, [editing]);
+
+  useEffect(() => {
+    const handlePointerMove = (event: PointerEvent) => {
+      if (!resizeRef.current) return;
+      const nextWidth = resizeRef.current.startWidth + event.clientX - resizeRef.current.startX;
+      onResize(category.id, Math.min(maxWidth, Math.max(minWidth, nextWidth)));
+    };
+    const handlePointerUp = () => {
+      resizeRef.current = null;
+    };
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp);
+    return () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+    };
+  }, [category.id, maxWidth, minWidth, onResize]);
 
   const commitName = () => {
     const trimmed = nameDraft.trim();
@@ -105,18 +133,21 @@ export const BoardColumn = ({
   };
   
   return (
-    <div
+    <motion.div
       ref={setNodeRef}
-      style={style}
+      layout
+      style={{ ...style, width, minWidth }}
       className={cn(
-        "flex flex-col bg-card/30 backdrop-blur-xl border border-white/20 shadow-xl rounded-2xl w-[86vw] sm:w-[340px] lg:w-auto lg:flex-[1_1_0%] lg:min-w-[300px] lg:max-w-[520px] max-h-[80vh] flex-shrink-0 transition-opacity",
+        "board-column relative flex flex-col rounded-2xl max-h-[80vh] flex-shrink-0 transition-opacity",
         isDragging && "opacity-50",
-        dropTarget && !isDragging && "category-drop-glow"
+        dropTarget && !isDragging && "category-drop-glow",
+        swapPulse && "category-swap-pulse"
       )}
+      transition={{ layout: { type: "spring", stiffness: 380, damping: 30 } }}
     >
       {/* Column Header */}
       <div 
-        className="flex items-center gap-3 p-4 border-b border-border/30 rounded-t-2xl cursor-grab active:cursor-grabbing bg-card/20 hover:bg-card/40 transition-colors group"
+        className="board-column-header flex items-center gap-3 rounded-t-2xl border-b p-4 cursor-grab active:cursor-grabbing transition-colors group"
         {...attributes}
         {...listeners}
       >
@@ -133,7 +164,7 @@ export const BoardColumn = ({
               type="button"
               aria-label={t.changeColor}
               onClick={(e) => e.stopPropagation()}
-              className="h-3 w-3 rounded-full flex-shrink-0 transition-transform hover:scale-125"
+              className="h-6 w-8 rounded-md flex-shrink-0 border border-white/20 shadow-sm transition-transform hover:scale-105"
               style={{ backgroundColor: colorVar(category.color) }}
             />
           }
@@ -183,6 +214,18 @@ export const BoardColumn = ({
           <X className="h-4 w-4" />
         </button>
       </div>
+
+      <div
+        role="separator"
+        aria-orientation="vertical"
+        aria-label="Resize column"
+        onPointerDown={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          resizeRef.current = { startX: event.clientX, startWidth: width };
+        }}
+        className="absolute right-0 top-3 bottom-3 z-10 w-2 cursor-ew-resize rounded-full opacity-40 transition-opacity hover:bg-primary/40 sm:opacity-0 sm:group-hover:opacity-100"
+      />
       
       {/* Column Body */}
       <div className="flex-1 min-h-[180px] p-3 overflow-y-auto overscroll-contain space-y-3 kanban-scroll" onPointerDown={(e) => e.stopPropagation()}>
@@ -217,6 +260,6 @@ export const BoardColumn = ({
           {t.add}
         </button>
       </div>
-    </div>
+    </motion.div>
   );
 };

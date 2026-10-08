@@ -20,7 +20,13 @@ Everything saves to your browser automatically.
 
 ## Releases
 
-- **v1.9.0 (Current Release)**:
+- **v1.10.0 (Current Release)**:
+  - Added resizable columns with persisted widths.
+  - Added animated column swaps with glow feedback.
+  - Improved column header color identification and Light/Mixed theme contrast.
+  - Added the shared recent-colors grid.
+
+- **v1.9.0**:
   - Added glass-style category columns with horizontal scrolling on mobile.
   - Added category creation, renaming, color changes, deletion, and reordering.
   - Added moving and reordering tasks across categories.

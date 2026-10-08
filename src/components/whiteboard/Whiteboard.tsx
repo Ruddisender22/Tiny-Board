@@ -34,7 +34,11 @@ import { useIsTouchDevice } from "@/lib/utils";
 
 const STORAGE_KEY = "whiteboard:tasks:v2";
 const CATEGORIES_STORAGE_KEY = "whiteboard:categories:v1";
+const COLUMN_WIDTHS_STORAGE_KEY = "whiteboard:column-widths:v1";
 const GITHUB_USER = "Ruddisender22";
+const DEFAULT_COLUMN_WIDTH = 360;
+const MIN_COLUMN_WIDTH = 280;
+const MAX_COLUMN_WIDTH = 640;
 
 const DEFAULT_CATEGORY: Category = {
   id: "category-default",
@@ -108,6 +112,25 @@ const loadCategories = (): Category[] => {
     // Fall through to the default category when stored data is invalid.
   }
   return [DEFAULT_CATEGORY];
+};
+
+const loadColumnWidths = (): Record<string, number> => {
+  try {
+    const raw = localStorage.getItem(COLUMN_WIDTHS_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === "object") {
+        return Object.fromEntries(
+          Object.entries(parsed)
+            .filter(([, width]) => typeof width === "number")
+            .map(([id, width]) => [id, Math.min(MAX_COLUMN_WIDTH, Math.max(MIN_COLUMN_WIDTH, width as number))])
+        );
+      }
+    }
+  } catch {
+    // Fall back to the default width when stored dimensions are invalid.
+  }
+  return {};
 };
 
 const sortWithCompletedLast = (tasks: Task[]): Task[] => {
@@ -299,10 +322,12 @@ const SettingsPanel = ({
 export const Whiteboard = () => {
   const [tasks, setTasks] = useState<Task[]>(() => loadTasks());
   const [categories, setCategories] = useState<Category[]>(() => loadCategories());
+  const [columnWidths, setColumnWidths] = useState<Record<string, number>>(() => loadColumnWidths());
   const [hovered, setHovered] = useState(false);
   const [creating, setCreating] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [dropTargetCategoryId, setDropTargetCategoryId] = useState<string | null>(null);
+  const [swappedCategoryId, setSwappedCategoryId] = useState<string | null>(null);
   const [filterTag, setFilterTag] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [helpOpen, setHelpOpen] = useState(false);
@@ -360,6 +385,10 @@ export const Whiteboard = () => {
   useEffect(() => {
     localStorage.setItem(CATEGORIES_STORAGE_KEY, JSON.stringify(categories));
   }, [categories]);
+
+  useEffect(() => {
+    localStorage.setItem(COLUMN_WIDTHS_STORAGE_KEY, JSON.stringify(columnWidths));
+  }, [columnWidths]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
@@ -430,6 +459,13 @@ export const Whiteboard = () => {
     setCategories((prev) => prev.map((category) => category.id === id ? { ...category, color } : category));
   }, []);
 
+  const changeColumnWidth = useCallback((id: string, width: number) => {
+    setColumnWidths((prev) => ({
+      ...prev,
+      [id]: Math.min(MAX_COLUMN_WIDTH, Math.max(MIN_COLUMN_WIDTH, Math.round(width))),
+    }));
+  }, []);
+
   const toggleTask = useCallback((id: string) => {
     setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)));
   }, []);
@@ -480,6 +516,8 @@ export const Whiteboard = () => {
         [next[oldIndex], next[newIndex]] = [next[newIndex], next[oldIndex]];
         return next;
       });
+      setSwappedCategoryId(targetCategoryId);
+      window.setTimeout(() => setSwappedCategoryId(null), 700);
       return;
     }
 
@@ -504,6 +542,7 @@ export const Whiteboard = () => {
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(String(event.active.id));
+    setSwappedCategoryId(null);
   };
 
   const handleDragOver = (event: DragOverEvent) => {
@@ -607,7 +646,7 @@ export const Whiteboard = () => {
 
         <DndContext sensors={sensors} collisionDetection={closestCenter}
           onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd}
-          onDragCancel={() => { setActiveId(null); setDropTargetCategoryId(null); }}
+          onDragCancel={() => { setActiveId(null); setDropTargetCategoryId(null); setSwappedCategoryId(null); }}
         >
           {showCreateFrame && (
             <div className="mx-auto mb-5 w-full max-w-2xl">
@@ -624,6 +663,11 @@ export const Whiteboard = () => {
                   key={category.id}
                   category={category}
                   dropTarget={dropTargetCategoryId === category.id}
+                  swapPulse={swappedCategoryId === category.id}
+                  width={columnWidths[category.id] ?? DEFAULT_COLUMN_WIDTH}
+                  minWidth={MIN_COLUMN_WIDTH}
+                  maxWidth={MAX_COLUMN_WIDTH}
+                  onResize={changeColumnWidth}
                   tasks={displayedTasks.filter((task) => task.categoryId === category.id)}
                   onRenameCategory={renameCategory}
                   onDeleteCategory={deleteCategory}
