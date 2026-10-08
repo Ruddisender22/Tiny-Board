@@ -24,7 +24,12 @@ Tiny Board is local by design. It does not require an account or backend, and ta
 
 ## Releases
 
-- **v1.18.0 (Current Release)**:
+- **v1.19.0 (Current Release)**:
+  - Redesigned the board as a fixed-toolbar canvas with grid-snapped free column movement.
+  - Added a radial creation menu fixed to the bottom-right corner.
+  - Preserved column content and shape throughout dragging.
+
+- **v1.18.0**:
   - Redesigned the category-selection overlay to prevent task/message overlap.
   - Improved Add category proportions.
   - Replaced the bottom haze with subtle windblown monochrome sand particles.

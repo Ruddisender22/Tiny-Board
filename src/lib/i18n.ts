@@ -54,6 +54,14 @@ export const translations = {
     deleteAllConfirm: "Delete all tasks? This cannot be undone.",
     changelogEntries: [
       {
+        version: "1.19.0",
+        changes: [
+          "Redesigned the board as a fixed-toolbar canvas with grid-snapped free column movement",
+          "Added a radial creation menu fixed to the bottom-right corner",
+          "Preserved column content and shape throughout dragging",
+        ],
+      },
+      {
         version: "1.18.0",
         changes: [
           "Redesigned the category-selection overlay to prevent task/message overlap",
@@ -256,6 +264,14 @@ export const translations = {
     deleteAll: "Eliminar todo",
     deleteAllConfirm: "¿Eliminar todas las tareas? Esto no se puede deshacer.",
     changelogEntries: [
+      {
+        version: "1.19.0",
+        changes: [
+          "Rediseñada la pizarra con franja fija y movimiento libre de columnas ajustado a cuadrícula",
+          "Añadido menú radial fijo para crear tareas y categorías",
+          "Las columnas conservan contenido y forma durante todo el arrastre",
+        ],
+      },
       {
         version: "1.18.0",
         changes: [

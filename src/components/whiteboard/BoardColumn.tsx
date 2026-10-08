@@ -1,4 +1,4 @@
-import { useSortable, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { useDraggable, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { TaskCard, Task } from "./TaskCard";
 import { TaskColor, colorVar, colorVarSoft } from "@/lib/taskColors";
@@ -22,6 +22,8 @@ interface BoardColumnProps {
   swapPulse: boolean;
   isSingleColumn: boolean;
   dataCategoryId: string;
+  x: number;
+  y: number;
   width: number;
   minWidth: number;
   maxWidth: number;
@@ -52,6 +54,8 @@ export const BoardColumn = ({
   swapPulse,
   isSingleColumn,
   dataCategoryId,
+  x,
+  y,
   width,
   minWidth,
   maxWidth,
@@ -74,7 +78,7 @@ export const BoardColumn = ({
   const t = translations[lang];
   const isTouch = useIsTouchDevice();
   
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: category.id,
     data: {
       type: "Column",
@@ -83,8 +87,10 @@ export const BoardColumn = ({
   });
   
   const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
+    left: x,
+    top: y,
+    transform: CSS.Translate.toString(transform),
+    zIndex: isDragging ? 80 : undefined,
   };
   
   const [editing, setEditing] = useState(false);
@@ -146,9 +152,9 @@ export const BoardColumn = ({
       data-category-id={dataCategoryId}
       style={{ ...style, width: isSingleColumn ? "100%" : width, minWidth: isSingleColumn ? 0 : minWidth }}
       className={cn(
-        "board-column relative flex flex-col rounded-2xl max-h-[80vh] flex-shrink-0 transition-[box-shadow,border-color]",
+        "board-column absolute flex flex-col rounded-2xl max-h-[80vh] flex-shrink-0 transition-[box-shadow,border-color]",
         isSingleColumn && "board-column-single",
-        isDragging && "z-50 opacity-0",
+        isDragging && "opacity-100",
         dropTarget && !isDragging && "category-drop-glow",
         swapPulse && "category-swap-pulse",
         selectionMode && "category-selection-glow relative z-50 cursor-pointer"

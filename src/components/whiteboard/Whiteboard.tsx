@@ -18,11 +18,11 @@ import {
   SortableContext,
   horizontalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { Github, X, HelpCircle, Settings, Sun, Moon, Cloud, Trash2, FolderPlus } from "lucide-react";
+import { Github, X, HelpCircle, Settings, Sun, Moon, Cloud, Trash2, FolderPlus, MessageSquare, Plus } from "lucide-react";
 import { TaskCard, Task } from "./TaskCard";
 import { BoardColumn, Category } from "./BoardColumn";
 import { CreateTaskFrame, CreateTaskFrameHandle } from "./CreateTaskFrame";
-import { TaskColor, DEFAULT_HUE, colorVar } from "@/lib/taskColors";
+import { TaskColor, DEFAULT_HUE } from "@/lib/taskColors";
 import {
   translations,
   Lang,
@@ -40,11 +40,14 @@ const GITHUB_USER = "Ruddisender22";
 const DEFAULT_COLUMN_WIDTH = 360;
 const MIN_COLUMN_WIDTH = 280;
 const MAX_COLUMN_WIDTH = 640;
+const CANVAS_GRID = 24;
 
 const DEFAULT_CATEGORY: Category = {
   id: "category-default",
   name: "General",
   color: DEFAULT_HUE,
+  x: 24,
+  y: 24,
 };
 
 type StatusFilter = "all" | "active" | "completed";
@@ -101,10 +104,12 @@ const loadCategories = (): Category[] => {
       if (Array.isArray(parsed)) {
         const categories = parsed
           .filter((category) => category && typeof category.id === "string")
-          .map((category) => ({
+          .map((category, index) => ({
             id: category.id,
             name: String(category.name ?? "Untitled"),
             color: typeof category.color === "number" ? category.color : DEFAULT_HUE,
+            x: typeof category.x === "number" ? category.x : 24 + (index % 3) * 384,
+            y: typeof category.y === "number" ? category.y : 24 + Math.floor(index / 3) * 48,
           }));
         if (categories.length > 0) return categories;
       }
@@ -325,6 +330,7 @@ export const Whiteboard = () => {
   const [categories, setCategories] = useState<Category[]>(() => loadCategories());
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>(() => loadColumnWidths());
   const [creating, setCreating] = useState(false);
+  const [fabOpen, setFabOpen] = useState(false);
   const [createNearPointer, setCreateNearPointer] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [dropTargetCategoryId, setDropTargetCategoryId] = useState<string | null>(null);
@@ -455,6 +461,8 @@ export const Whiteboard = () => {
       id: crypto.randomUUID(),
       name: trimmed,
       color: DEFAULT_HUE,
+      x: 24 + (categories.length % 3) * 384,
+      y: 24 + Math.floor(categories.length / 3) * 48,
     };
     setCategories((prev) => [...prev, category]);
     setCategoryNameDraft("");
@@ -524,20 +532,12 @@ export const Whiteboard = () => {
     if (!over || active.id === over.id) return;
 
     if (categories.some((category) => category.id === active.id)) {
-      const targetCategoryId = categories.some((category) => category.id === over.id)
-        ? String(over.id)
-        : tasks.find((task) => task.id === over.id)?.categoryId;
-      if (!targetCategoryId || targetCategoryId === active.id) return;
-      setCategories((items) => {
-        const oldIndex = items.findIndex((category) => category.id === active.id);
-        const newIndex = items.findIndex((category) => category.id === targetCategoryId);
-        if (oldIndex < 0 || newIndex < 0) return items;
-        const next = [...items];
-        [next[oldIndex], next[newIndex]] = [next[newIndex], next[oldIndex]];
-        return next;
-      });
-      setSwappedCategoryId(targetCategoryId);
-      window.setTimeout(() => setSwappedCategoryId(null), 700);
+      const activeCategory = categories.find((category) => category.id === active.id);
+      if (!activeCategory) return;
+      const nextX = Math.max(CANVAS_GRID, Math.round((activeCategory.x + event.delta.x) / CANVAS_GRID) * CANVAS_GRID);
+      const nextY = Math.max(CANVAS_GRID, Math.round((activeCategory.y + event.delta.y) / CANVAS_GRID) * CANVAS_GRID);
+      setCategories((items) => items.map((category) => category.id === active.id ? { ...category, x: nextX, y: nextY } : category));
+      setSwappedCategoryId(null);
       return;
     }
 
@@ -624,7 +624,7 @@ export const Whiteboard = () => {
     { key: "completed", label: t.completed },
   ];
 
-  const showCreateFrame = createNearPointer || creating || isTouch;
+  const showCreateFrame = creating || isTouch;
 
   return (
     <>
@@ -640,6 +640,7 @@ export const Whiteboard = () => {
       className="relative z-10 min-h-screen w-full px-4 py-12 sm:py-20 pb-32"
     >
       <div className="mx-auto w-full max-w-[1440px]">
+        <div className="app-top-strip">
         <header className="mb-4 flex flex-col gap-3 border-b border-border/50 pb-4 md:flex-row md:items-end md:justify-between">
           <div>
             <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">{t.title}</h1>
@@ -689,6 +690,7 @@ export const Whiteboard = () => {
             <span className="text-xs text-muted-foreground/50">{categories.length}</span>
           </div>
         </div>
+        </div>
 
         <DndContext sensors={sensors} collisionDetection={closestCenter}
           onDragStart={handleDragStart} onDragMove={handleDragMove} onDragOver={handleDragOver} onDragEnd={handleDragEnd}
@@ -725,8 +727,8 @@ export const Whiteboard = () => {
               </motion.div>
             </>
           )}
-          <div className="mx-auto mb-3 flex min-h-[52px] w-full max-w-2xl items-center gap-3">
-            <div ref={createAnchorRef} className="min-w-0 flex-1">
+          <div ref={createAnchorRef} className={`create-task-anchor ${creating ? "is-active" : ""}`}>
+            <div className="min-w-0 flex-1">
               {showCreateFrame && (
                 <CreateTaskFrame ref={frameRef} visible={showCreateFrame} active={creating}
                   onActivate={() => setCreating(true)} onSubmit={addTask} onCancel={() => setCreating(false)}
@@ -734,22 +736,16 @@ export const Whiteboard = () => {
                 />
               )}
             </div>
-            <button
-              type="button"
-              onClick={addCategory}
-              className="group inline-flex h-12 min-w-[148px] shrink-0 items-center justify-center gap-2 rounded-xl border border-primary/30 bg-primary/[0.1] px-5 text-xs font-semibold text-primary shadow-sm backdrop-blur transition-all hover:border-primary/60 hover:bg-primary/[0.16] hover:shadow-md"
-            >
-              <FolderPlus className="h-4 w-4 transition-transform group-hover:-translate-y-0.5" />
-              <span>{t.addCategory}</span>
-            </button>
           </div>
           <SortableContext items={categories.map((category) => category.id)} strategy={horizontalListSortingStrategy}>
-            <div className="flex max-w-full items-stretch justify-center gap-4 overflow-x-auto pb-5 snap-x snap-mandatory">
+            <div className="whiteboard-canvas relative min-h-[calc(100vh-220px)] w-full overflow-auto pb-32">
               {categories.map((category) => (
                 <BoardColumn
                   key={category.id}
                   dataCategoryId={category.id}
                   category={category}
+                  x={category.x}
+                  y={category.y}
                   dropTarget={dropTargetCategoryId === category.id}
                   swapPulse={swappedCategoryId === category.id}
                   isSingleColumn={categories.length === 1}
@@ -779,18 +775,7 @@ export const Whiteboard = () => {
           <DragOverlay dropAnimation={{ duration: 200, easing: "cubic-bezier(0.18, 0.67, 0.6, 1.22)" }}>
             {activeId ? (() => {
               const activeCategory = categories.find((category) => category.id === activeId);
-              if (activeCategory) {
-                return (
-                  <div className="column-drag-preview board-column overflow-hidden rounded-2xl" style={{ width: columnWidths[activeCategory.id] ?? DEFAULT_COLUMN_WIDTH }}>
-                    <div className="board-column-header flex items-center rounded-t-2xl border-b p-4">
-                      <div className="category-name-bar w-full truncate px-3 py-2 font-semibold" style={{ backgroundColor: colorVar(activeCategory.color) }}>
-                        {activeCategory.name}
-                      </div>
-                    </div>
-                    <div className="min-h-[180px] p-3" />
-                  </div>
-                );
-              }
+              if (activeCategory) return null;
               const t = tasks.find((x) => x.id === activeId);
               if (!t) return null;
               const previewWidth = columnWidths[dragPreviewCategoryId ?? t.categoryId] ?? DEFAULT_COLUMN_WIDTH;
@@ -806,6 +791,36 @@ export const Whiteboard = () => {
       </div>
     </main>
 
+    </div>
+
+    <div className={`radial-actions ${fabOpen ? "is-open" : ""}`}>
+      <button
+        type="button"
+        aria-label="Open creation actions"
+        aria-expanded={fabOpen}
+        onClick={() => setFabOpen((open) => !open)}
+        className="radial-fab"
+      >
+        <Plus className="h-7 w-7 transition-transform duration-300" />
+      </button>
+      <button
+        type="button"
+        aria-label={t.createTask}
+        onClick={() => { setCreating(true); setFabOpen(false); }}
+        className="radial-option radial-option-task"
+      >
+        <MessageSquare className="h-5 w-5" />
+        <span>{t.createTask}</span>
+      </button>
+      <button
+        type="button"
+        aria-label={t.addCategory}
+        onClick={() => { addCategory(); setFabOpen(false); }}
+        className="radial-option radial-option-category"
+      >
+        <FolderPlus className="h-5 w-5" />
+        <span>{t.addCategory}</span>
+      </button>
     </div>
 
     {/* Bottom-left buttons: Help + Settings + Delete All */}
