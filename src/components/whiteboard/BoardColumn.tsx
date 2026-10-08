@@ -2,7 +2,7 @@ import { useSortable, SortableContext, verticalListSortingStrategy } from "@dnd-
 import { CSS } from "@dnd-kit/utilities";
 import { TaskCard, Task } from "./TaskCard";
 import { TaskColor, colorVar } from "@/lib/taskColors";
-import { GripVertical, X, Plus } from "lucide-react";
+import { GripVertical, X } from "lucide-react";
 import { useState, useRef, useEffect, KeyboardEvent } from "react";
 import { ColorPicker } from "./ColorPicker";
 import { Lang, translations } from "@/lib/i18n";
@@ -24,10 +24,11 @@ interface BoardColumnProps {
   minWidth: number;
   maxWidth: number;
   onResize: (id: string, width: number) => void;
+  selectionMode: boolean;
+  onSelectCategory: (id: string) => void;
   onRenameCategory: (id: string, newName: string) => void;
   onDeleteCategory: (id: string) => void;
   onChangeCategoryColor: (id: string, color: TaskColor) => void;
-  onAddTask: (categoryId: string) => void;
   
   // Task operations passed down
   onToggleTask: (id: string) => void;
@@ -50,10 +51,11 @@ export const BoardColumn = ({
   minWidth,
   maxWidth,
   onResize,
+  selectionMode,
+  onSelectCategory,
   onRenameCategory,
   onDeleteCategory,
   onChangeCategoryColor,
-  onAddTask,
   onToggleTask,
   onDeleteTask,
   onRenameTask,
@@ -141,9 +143,11 @@ export const BoardColumn = ({
         "board-column relative flex flex-col rounded-2xl max-h-[80vh] flex-shrink-0 transition-opacity",
         isDragging && "opacity-50",
         dropTarget && !isDragging && "category-drop-glow",
-        swapPulse && "category-swap-pulse"
+        swapPulse && "category-swap-pulse",
+        selectionMode && "category-selection-glow relative z-50 cursor-pointer"
       )}
       transition={{ layout: { type: "spring", stiffness: 380, damping: 30 } }}
+      onClick={() => selectionMode && onSelectCategory(category.id)}
     >
       {/* Column Header */}
       <div 
@@ -249,17 +253,7 @@ export const BoardColumn = ({
         </SortableContext>
       </div>
       
-      {/* Column Footer */}
-      <div className="p-3 border-t border-border/30 rounded-b-2xl bg-card/10 hover:bg-card/20 transition-colors" onPointerDown={(e) => e.stopPropagation()}>
-        <button
-          type="button"
-          onClick={() => onAddTask(category.id)}
-          className="w-full flex items-center justify-center gap-2 py-2 rounded-xl text-sm font-medium text-card-foreground/70 hover:text-card-foreground hover:bg-card-foreground/10 transition-all"
-        >
-          <Plus className="h-4 w-4" />
-          {t.add}
-        </button>
-      </div>
+      <div className="h-2 shrink-0 rounded-b-2xl bg-card-foreground/[0.03]" aria-hidden />
     </motion.div>
   );
 };

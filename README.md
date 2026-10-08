@@ -20,7 +20,14 @@ Everything saves to your browser automatically.
 
 ## Releases
 
-- **v1.10.0 (Current Release)**:
+- **v1.11.0 (Current Release)**:
+  - Create-task button appears only near its interaction area.
+  - New tasks use a floating preview and require choosing a category.
+  - Removed create-task buttons from inside columns.
+  - Added adaptive drag previews, larger task handles, and Full-Color by default.
+  - Improved page and column scrollbars.
+
+- **v1.10.0**:
   - Added resizable columns with persisted widths.
   - Added animated column swaps with glow feedback.
   - Improved column header color identification and Light/Mixed theme contrast.

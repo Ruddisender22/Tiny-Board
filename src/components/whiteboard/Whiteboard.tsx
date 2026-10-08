@@ -323,11 +323,13 @@ export const Whiteboard = () => {
   const [tasks, setTasks] = useState<Task[]>(() => loadTasks());
   const [categories, setCategories] = useState<Category[]>(() => loadCategories());
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>(() => loadColumnWidths());
-  const [hovered, setHovered] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [createNearPointer, setCreateNearPointer] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [dropTargetCategoryId, setDropTargetCategoryId] = useState<string | null>(null);
+  const [pendingTask, setPendingTask] = useState<{ name: string; color: TaskColor; tags: string[] } | null>(null);
   const [swappedCategoryId, setSwappedCategoryId] = useState<string | null>(null);
+  const [dragPreviewCategoryId, setDragPreviewCategoryId] = useState<string | null>(null);
   const [filterTag, setFilterTag] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [helpOpen, setHelpOpen] = useState(false);
@@ -338,10 +340,10 @@ export const Whiteboard = () => {
   const [lang, setLang] = useState<Lang>(() => loadLang());
   const [theme, setTheme] = useState<Theme>(() => loadTheme());
   const [fullColor, setFullColor] = useState(() => loadFullColor());
-  const [creatingCategoryId, setCreatingCategoryId] = useState(() => loadCategories()[0]?.id ?? DEFAULT_CATEGORY.id);
   const boardRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<CreateTaskFrameHandle>(null);
   const categoryNameInputRef = useRef<HTMLInputElement>(null);
+  const createAnchorRef = useRef<HTMLDivElement>(null);
   const isTouch = useIsTouchDevice();
 
   const t = translations[lang];
@@ -409,7 +411,7 @@ export const Whiteboard = () => {
     return list;
   }, [tasks, filterTag, statusFilter]);
 
-  const addTask = useCallback((name: string, color: TaskColor, tags: string[]) => {
+  const addTaskToCategory = useCallback((categoryId: string, name: string, color: TaskColor, tags: string[]) => {
     setTasks((prev) => [
       {
         id: crypto.randomUUID(),
@@ -417,11 +419,27 @@ export const Whiteboard = () => {
         color,
         completed: false,
         tags,
-        categoryId: creatingCategoryId,
+        categoryId,
       },
       ...prev,
     ]);
-  }, [creatingCategoryId]);
+  }, []);
+
+  const addTask = useCallback((name: string, color: TaskColor, tags: string[]) => {
+    if (categories.length === 1) {
+      addTaskToCategory(categories[0].id, name, color, tags);
+      return;
+    }
+    setPendingTask({ name, color, tags });
+    setCreating(false);
+    setCreateNearPointer(false);
+  }, [addTaskToCategory, categories]);
+
+  const selectCategoryForPendingTask = useCallback((categoryId: string) => {
+    if (!pendingTask) return;
+    addTaskToCategory(categoryId, pendingTask.name, pendingTask.color, pendingTask.tags);
+    setPendingTask(null);
+  }, [addTaskToCategory, pendingTask]);
 
   const addCategory = useCallback(() => {
     setCategoryNameDraft("");
@@ -437,7 +455,6 @@ export const Whiteboard = () => {
       color: DEFAULT_HUE,
     };
     setCategories((prev) => [...prev, category]);
-    setCreatingCategoryId(category.id);
     setCategoryNameDraft("");
     setCategoryDialogOpen(false);
   }, [categoryNameDraft]);
@@ -452,7 +469,6 @@ export const Whiteboard = () => {
     if (!fallback) return;
     setCategories((prev) => prev.filter((category) => category.id !== id));
     setTasks((prev) => prev.map((task) => task.categoryId === id ? { ...task, categoryId: fallback.id } : task));
-    setCreatingCategoryId((current) => current === id ? fallback.id : current);
   }, [categories]);
 
   const changeCategoryColor = useCallback((id: string, color: TaskColor) => {
@@ -501,6 +517,7 @@ export const Whiteboard = () => {
     const { active, over } = event;
     setActiveId(null);
     setDropTargetCategoryId(null);
+    setDragPreviewCategoryId(null);
     if (!over || active.id === over.id) return;
 
     if (categories.some((category) => category.id === active.id)) {
@@ -543,18 +560,40 @@ export const Whiteboard = () => {
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(String(event.active.id));
     setSwappedCategoryId(null);
+    const activeTask = tasks.find((task) => task.id === event.active.id);
+    setDragPreviewCategoryId(activeTask?.categoryId ?? null);
   };
 
   const handleDragOver = (event: DragOverEvent) => {
     const { active, over } = event;
-    if (!over || !categories.some((category) => category.id === active.id)) {
+    if (!over) {
       setDropTargetCategoryId(null);
+      setDragPreviewCategoryId(null);
       return;
     }
     const targetCategoryId = categories.some((category) => category.id === over.id)
       ? String(over.id)
       : tasks.find((task) => task.id === over.id)?.categoryId ?? null;
-    setDropTargetCategoryId(targetCategoryId === active.id ? null : targetCategoryId);
+    if (categories.some((category) => category.id === active.id)) {
+      setDropTargetCategoryId(targetCategoryId === active.id ? null : targetCategoryId);
+    } else {
+      setDropTargetCategoryId(null);
+      setDragPreviewCategoryId(targetCategoryId);
+    }
+  };
+
+  const handleBoardMouseMove = (event: React.MouseEvent) => {
+    if (creating || pendingTask || isTouch) return;
+    const anchor = createAnchorRef.current;
+    if (!anchor) return;
+    const rect = anchor.getBoundingClientRect();
+    const proximity = 96;
+    setCreateNearPointer(
+      event.clientX >= rect.left - proximity &&
+      event.clientX <= rect.right + proximity &&
+      event.clientY >= rect.top - proximity &&
+      event.clientY <= rect.bottom + proximity
+    );
   };
 
   const handleBoardClick = (e: React.MouseEvent) => {
@@ -571,14 +610,13 @@ export const Whiteboard = () => {
     { key: "completed", label: t.completed },
   ];
 
-  const showCreateFrame = hovered || creating || isTouch;
+  const showCreateFrame = createNearPointer || creating || isTouch;
 
   return (
     <>
     <div
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      onMouseMove={() => !hovered && setHovered(true)}
+      onMouseLeave={() => setCreateNearPointer(false)}
+      onMouseMove={handleBoardMouseMove}
       className="relative min-h-screen w-full bg-background bg-dot-pattern"
     >
     <main
@@ -646,16 +684,45 @@ export const Whiteboard = () => {
 
         <DndContext sensors={sensors} collisionDetection={closestCenter}
           onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd}
-          onDragCancel={() => { setActiveId(null); setDropTargetCategoryId(null); setSwappedCategoryId(null); }}
+          onDragCancel={() => { setActiveId(null); setDropTargetCategoryId(null); setDragPreviewCategoryId(null); setSwappedCategoryId(null); }}
         >
-          {showCreateFrame && (
-            <div className="mx-auto mb-5 w-full max-w-2xl">
+          {pendingTask && (
+            <>
+              <motion.div
+                className="fixed inset-0 z-40 bg-background/60 backdrop-blur-sm"
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                onClick={() => setPendingTask(null)}
+              />
+              <motion.div
+                className="pointer-events-none fixed left-1/2 top-24 z-[60] w-[min(420px,calc(100vw-2rem))] -translate-x-1/2"
+                initial={{ opacity: 0, y: -12, scale: 0.94 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -12, scale: 0.94 }}
+              >
+                <p className="mb-2 text-center text-xs font-medium text-foreground/80">{t.chooseCategory}</p>
+                <TaskCard
+                  task={{ id: "pending-create", name: pendingTask.name, color: pendingTask.color, completed: false, tags: pendingTask.tags, categoryId: "" }}
+                  onToggle={() => {}}
+                  onDelete={() => {}}
+                  onRename={() => {}}
+                  onAddTag={() => {}}
+                  onRemoveTag={() => {}}
+                  onChangeColor={() => {}}
+                  overlay
+                  fullColor={fullColor}
+                  lang={lang}
+                />
+              </motion.div>
+            </>
+          )}
+          <div ref={createAnchorRef} className="mx-auto mb-5 min-h-[72px] w-full max-w-2xl">
+            {showCreateFrame && (
               <CreateTaskFrame ref={frameRef} visible={showCreateFrame} active={creating}
                 onActivate={() => setCreating(true)} onSubmit={addTask} onCancel={() => setCreating(false)}
                 lang={lang} isStuck={false}
               />
-            </div>
-          )}
+            )}
+          </div>
           <SortableContext items={categories.map((category) => category.id)} strategy={horizontalListSortingStrategy}>
             <div className="flex max-w-full items-stretch justify-center gap-4 overflow-x-auto pb-5 snap-x snap-mandatory">
               {categories.map((category) => (
@@ -672,10 +739,8 @@ export const Whiteboard = () => {
                   onRenameCategory={renameCategory}
                   onDeleteCategory={deleteCategory}
                   onChangeCategoryColor={changeCategoryColor}
-                  onAddTask={(categoryId) => {
-                    setCreatingCategoryId(categoryId);
-                    setCreating(true);
-                  }}
+                  selectionMode={Boolean(pendingTask)}
+                  onSelectCategory={selectCategoryForPendingTask}
                   onToggleTask={toggleTask}
                   onDeleteTask={deleteTask}
                   onRenameTask={renameTask}
@@ -692,8 +757,13 @@ export const Whiteboard = () => {
             {activeId ? (() => {
               const t = tasks.find((x) => x.id === activeId);
               if (!t) return null;
-              return <TaskCard task={t} onToggle={() => {}} onDelete={() => {}} onRename={() => {}}
-                onAddTag={() => {}} onRemoveTag={() => {}} onChangeColor={() => {}} overlay fullColor={fullColor} lang={lang} />;
+              const previewWidth = columnWidths[dragPreviewCategoryId ?? t.categoryId] ?? DEFAULT_COLUMN_WIDTH;
+              return (
+                <div className="drag-card-preview" style={{ width: previewWidth, maxWidth: "calc(100vw - 2rem)" }}>
+                  <TaskCard task={t} onToggle={() => {}} onDelete={() => {}} onRename={() => {}}
+                    onAddTag={() => {}} onRemoveTag={() => {}} onChangeColor={() => {}} overlay fullColor={fullColor} lang={lang} />
+                </div>
+              );
             })() : null}
           </DragOverlay>
         </DndContext>

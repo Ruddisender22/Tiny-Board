@@ -19,6 +19,7 @@ export const translations = {
     cancel: "Cancel",
     create: "Create",
     add: "Add task",
+    chooseCategory: "Choose a category for this task",
     createTask: "Create task",
     whatNeedsDone: "What needs to be done?",
     color: "Color",
@@ -53,12 +54,13 @@ export const translations = {
     deleteAllConfirm: "Delete all tasks? This cannot be undone.",
     changelogEntries: [
       {
-        version: "1.10.0",
+        version: "1.11.0",
         changes: [
-          "Resizable columns with persisted widths",
-          "Animated column swaps with glow feedback",
-          "Color blocks in column headers and improved Light/Mixed theme contrast",
-          "Recent color grid shared by tasks, columns, and new tasks",
+          "Create-task button now appears only near its interaction area",
+          "New tasks use a floating preview and require choosing a category",
+          "Removed create-task buttons from inside columns",
+          "Resizable columns, adaptive drag previews, larger task drag handles, and Full-Color by default",
+          "Improved column and page scrollbars with no white track",
         ],
       },
       {
@@ -169,6 +171,7 @@ export const translations = {
     cancel: "Cancelar",
     create: "Crear",
     add: "Añadir tarea",
+    chooseCategory: "Elige una categoría para esta tarea",
     createTask: "Crear tarea",
     whatNeedsDone: "¿Qué hay que hacer?",
     color: "Color",
@@ -203,12 +206,13 @@ export const translations = {
     deleteAllConfirm: "¿Eliminar todas las tareas? Esto no se puede deshacer.",
     changelogEntries: [
       {
-        version: "1.10.0",
+        version: "1.11.0",
         changes: [
-          "Columnas redimensionables con anchos persistentes",
-          "Intercambio de columnas con animación y efecto glow",
-          "Bloques de color en cabeceras y mejor contraste en temas Claro y Mixto",
-          "Cuadrícula de colores recientes compartida por tareas, columnas y nuevas tareas",
+          "El botón de crear tarea aparece solo cerca de su zona de interacción",
+          "Las nuevas tareas muestran una preview flotante y exigen elegir categoría",
+          "Eliminados los botones de crear tarea dentro de las columnas",
+          "Columnas redimensionables, preview adaptable, handles grandes y Color completo por defecto",
+          "Mejorados los scrollbars de columnas y página sin pista blanca",
         ],
       },
       {
@@ -335,7 +339,8 @@ export const saveTheme = (theme: Theme) => localStorage.setItem(THEME_KEY, theme
 
 export const loadFullColor = (): boolean => {
   try {
-    return localStorage.getItem(FULLCOLOR_KEY) === "true";
+    const stored = localStorage.getItem(FULLCOLOR_KEY);
+    return stored === null ? true : stored === "true";
   } catch {
     return false;
   }

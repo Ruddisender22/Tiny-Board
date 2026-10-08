@@ -175,16 +175,16 @@ export const TaskCard = ({
       {/* Drag handle */}
       <button
         type="button"
-        aria-label="Drag to reorder"
+        aria-label="Drag task"
         onClick={(e) => e.stopPropagation()}
         className={cn(
-          "ml-1 -mr-1 cursor-grab active:cursor-grabbing text-card-foreground/40 hover:text-card-foreground/70 transition-colors touch-none",
-          isTouch ? "opacity-60" : "opacity-0 group-hover:opacity-100"
+          "ml-0 -mr-1 grid h-9 w-9 shrink-0 place-items-center rounded-lg cursor-grab active:cursor-grabbing text-card-foreground/45 hover:bg-card-foreground/10 hover:text-card-foreground/80 transition-colors touch-none",
+          isTouch ? "opacity-70" : "opacity-0 group-hover:opacity-100"
         )}
         {...attributes}
         {...listeners}
       >
-        <GripVertical className="h-4 w-4" />
+        <GripVertical className="h-5 w-5" />
       </button>
 
       {/* Color dot — popover to change color */}
