@@ -54,6 +54,14 @@ export const translations = {
     deleteAllConfirm: "Delete all tasks? This cannot be undone.",
     changelogEntries: [
       {
+        version: "1.24.0",
+        changes: [
+          "Empty columns now accept dragged tasks as drop targets",
+          "Fixed category selection visibility during new task creation",
+          "Expanded the freeform canvas to preserve columns placed lower down",
+        ],
+      },
+      {
         version: "1.23.0",
         changes: [
           "Removed the top gap and centered board constraint",
@@ -293,6 +301,14 @@ export const translations = {
     deleteAll: "Eliminar todo",
     deleteAllConfirm: "¿Eliminar todas las tareas? Esto no se puede deshacer.",
     changelogEntries: [
+      {
+        version: "1.24.0",
+        changes: [
+          "Las columnas vacías ahora aceptan tareas arrastradas",
+          "Corregida la visibilidad de categorías al crear una tarea",
+          "La pizarra se expande para conservar columnas colocadas más abajo",
+        ],
+      },
       {
         version: "1.23.0",
         changes: [

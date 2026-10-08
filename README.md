@@ -24,7 +24,12 @@ Tiny Board is local by design. It does not require an account or backend, and ta
 
 ## Releases
 
-- **v1.23.0 (Current Release)**:
+- **v1.24.0 (Current Release)**:
+  - Empty columns now accept dragged tasks as drop targets.
+  - Fixed category selection visibility during new task creation.
+  - Expanded the freeform canvas to preserve columns placed lower down.
+
+- **v1.23.0**:
   - Removed the top gap and centered board constraint.
   - Improved smooth column dragging by hiding task content during movement.
   - Fixed column target detection and swapping on the freeform canvas.

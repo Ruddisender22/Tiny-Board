@@ -1,4 +1,4 @@
-import { useDraggable } from "@dnd-kit/core";
+import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { TaskCard, Task } from "./TaskCard";
@@ -85,6 +85,10 @@ export const BoardColumn = ({
       type: "Column",
       category,
     },
+  });
+  const { setNodeRef: setBodyNodeRef } = useDroppable({
+    id: `category-drop:${category.id}`,
+    data: { categoryId: category.id },
   });
   
   const style = {
@@ -249,7 +253,7 @@ export const BoardColumn = ({
       />
       
       {/* Column Body */}
-      <div className={cn(
+      <div ref={setBodyNodeRef} className={cn(
         "board-column-body flex flex-col gap-3 p-3",
         tasks.length === 0 && "board-column-empty-body",
         isSingleColumn && "board-column-single-body"

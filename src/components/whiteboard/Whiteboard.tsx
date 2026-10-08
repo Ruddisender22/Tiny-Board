@@ -39,6 +39,7 @@ const MAX_COLUMN_WIDTH = 640;
 const CANVAS_GRID = 24;
 const CANVAS_PADDING = 0;
 const COLUMN_HEIGHT = 760;
+const CATEGORY_DROP_PREFIX = "category-drop:";
 
 const DEFAULT_CATEGORY: Category = {
   id: "category-default",
@@ -538,7 +539,8 @@ export const Whiteboard = () => {
   const getCanvasBounds = (category: Category) => {
     const canvas = canvasRef.current;
     const availableWidth = canvas?.clientWidth ?? window.innerWidth;
-    const availableHeight = Math.max(canvas?.clientHeight ?? window.innerHeight, COLUMN_HEIGHT + CANVAS_PADDING * 2);
+    const lowestColumn = Math.max(...categories.map((item) => item.y + COLUMN_HEIGHT), COLUMN_HEIGHT);
+    const availableHeight = Math.max(canvas?.scrollHeight ?? 0, lowestColumn + CANVAS_PADDING * 2);
     return {
       maxX: Math.max(CANVAS_PADDING, availableWidth - (columnWidths[category.id] ?? DEFAULT_COLUMN_WIDTH) - CANVAS_PADDING),
       maxY: Math.max(CANVAS_PADDING, availableHeight - COLUMN_HEIGHT - CANVAS_PADDING),
@@ -608,13 +610,14 @@ export const Whiteboard = () => {
 
     if (!over || active.id === over.id) return;
 
+    const overCategoryId = String(over.id).startsWith(CATEGORY_DROP_PREFIX)
+      ? String(over.id).slice(CATEGORY_DROP_PREFIX.length)
+      : categories.some((category) => category.id === over.id) ? String(over.id) : null;
     setTasks((items) => {
       const movingTask = items.find((task) => task.id === active.id);
       if (!movingTask) return items;
       const targetTask = items.find((task) => task.id === over.id);
-      const targetCategoryId = categories.some((category) => category.id === over.id)
-        ? String(over.id)
-        : targetTask?.categoryId;
+      const targetCategoryId = overCategoryId ?? targetTask?.categoryId;
       if (!targetCategoryId) return items;
 
       const remaining = items.filter((task) => task.id !== active.id);
@@ -645,9 +648,12 @@ export const Whiteboard = () => {
       setDragPreviewCategoryId(null);
       return;
     }
-    const targetCategoryId = categories.some((category) => category.id === over.id)
-      ? String(over.id)
-      : tasks.find((task) => task.id === over.id)?.categoryId ?? null;
+    const overId = String(over.id);
+    const targetCategoryId = overId.startsWith(CATEGORY_DROP_PREFIX)
+      ? overId.slice(CATEGORY_DROP_PREFIX.length)
+      : categories.some((category) => category.id === over.id)
+        ? overId
+        : tasks.find((task) => task.id === over.id)?.categoryId ?? null;
     if (categories.some((category) => category.id === active.id)) {
       setDropTargetCategoryId(targetCategoryId === active.id ? null : targetCategoryId);
     }
@@ -822,7 +828,11 @@ export const Whiteboard = () => {
               )}
             </div>
           </div>
-            <div ref={canvasRef} className="whiteboard-canvas relative min-h-[calc(100vh-220px)] w-full pb-32">
+            <div
+              ref={canvasRef}
+              className="whiteboard-canvas relative w-full pb-32"
+              style={{ minHeight: Math.max(window.innerHeight - 220, ...categories.map((category) => category.y + COLUMN_HEIGHT + 48)) }}
+            >
               {categories.map((category) => (
                 <BoardColumn
                   key={category.id}
