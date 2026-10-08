@@ -8,13 +8,13 @@ import {
   useSensor,
   useSensors,
   DragEndEvent,
+  DragOverEvent,
   DragStartEvent,
   DragOverlay,
   TouchSensor,
 } from "@dnd-kit/core";
 import {
   SortableContext,
-  arrayMove,
   horizontalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { Github, X, HelpCircle, Settings, Sun, Moon, Cloud, Trash2 } from "lucide-react";
@@ -302,6 +302,7 @@ export const Whiteboard = () => {
   const [hovered, setHovered] = useState(false);
   const [creating, setCreating] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [dropTargetCategoryId, setDropTargetCategoryId] = useState<string | null>(null);
   const [filterTag, setFilterTag] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [helpOpen, setHelpOpen] = useState(false);
@@ -448,13 +449,21 @@ export const Whiteboard = () => {
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveId(null);
+    setDropTargetCategoryId(null);
     if (!over || active.id === over.id) return;
 
     if (categories.some((category) => category.id === active.id)) {
+      const targetCategoryId = categories.some((category) => category.id === over.id)
+        ? String(over.id)
+        : tasks.find((task) => task.id === over.id)?.categoryId;
+      if (!targetCategoryId || targetCategoryId === active.id) return;
       setCategories((items) => {
         const oldIndex = items.findIndex((category) => category.id === active.id);
-        const newIndex = items.findIndex((category) => category.id === over.id);
-        return oldIndex < 0 || newIndex < 0 ? items : arrayMove(items, oldIndex, newIndex);
+        const newIndex = items.findIndex((category) => category.id === targetCategoryId);
+        if (oldIndex < 0 || newIndex < 0) return items;
+        const next = [...items];
+        [next[oldIndex], next[newIndex]] = [next[newIndex], next[oldIndex]];
+        return next;
       });
       return;
     }
@@ -480,6 +489,18 @@ export const Whiteboard = () => {
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(String(event.active.id));
+  };
+
+  const handleDragOver = (event: DragOverEvent) => {
+    const { active, over } = event;
+    if (!over || !categories.some((category) => category.id === active.id)) {
+      setDropTargetCategoryId(null);
+      return;
+    }
+    const targetCategoryId = categories.some((category) => category.id === over.id)
+      ? String(over.id)
+      : tasks.find((task) => task.id === over.id)?.categoryId ?? null;
+    setDropTargetCategoryId(targetCategoryId === active.id ? null : targetCategoryId);
   };
 
   const handleBoardClick = (e: React.MouseEvent) => {
@@ -512,25 +533,29 @@ export const Whiteboard = () => {
       className="relative min-h-screen w-full px-4 py-12 sm:py-20 pb-32"
     >
       <div className="mx-auto w-full max-w-[1440px]">
-        <header className="mb-10 text-center">
-          <h1 className="text-4xl font-semibold tracking-tight text-foreground">{t.title}</h1>
-          <p className="mt-2 text-sm text-muted-foreground">{t.subtitle}</p>
-        </header>
+        <header className="mb-7 flex flex-col gap-5 border-b border-border/50 pb-5 md:flex-row md:items-end md:justify-between">
+          <div>
+            <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">{t.title}</h1>
+            <p className="mt-1.5 text-sm text-muted-foreground">{t.subtitle}</p>
+          </div>
 
-        {/* Status filter tabs */}
-        <div className="mb-4 flex items-center justify-center gap-1 rounded-full bg-muted p-1 w-fit mx-auto">
-          {statusLabels.map(({ key, label }) => (
-            <button key={key} type="button" onClick={() => setStatusFilter(key)}
-              className={`rounded-full px-4 py-1.5 text-xs font-medium transition-all ${
-                statusFilter === key ? "bg-card text-card-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-              }`}
-            >{label}</button>
-          ))}
-        </div>
+          <div className="flex shrink-0 items-center gap-3 self-start md:self-auto">
+            <span className="hidden text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/60 sm:inline">{t.view}</span>
+            <div className="flex items-center gap-1 rounded-xl border border-border/70 bg-muted/70 p-1 shadow-sm backdrop-blur">
+              {statusLabels.map(({ key, label }) => (
+                <button key={key} type="button" onClick={() => setStatusFilter(key)}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all sm:px-4 ${
+                    statusFilter === key ? "bg-card text-card-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >{label}</button>
+              ))}
+            </div>
+          </div>
+        </header>
 
         {/* Tag filter bar */}
         {allTags.length > 0 && (
-          <div className="mb-6 flex items-center gap-2 flex-wrap justify-center">
+          <div className="mb-5 flex items-center gap-2 flex-wrap">
             <span className="text-xs text-muted-foreground/60 mr-1">{t.tags}</span>
             {allTags.map((tag) => (
               <button key={tag} type="button"
@@ -551,8 +576,11 @@ export const Whiteboard = () => {
           </div>
         )}
 
-        <div className="mb-5 flex items-center justify-between gap-3">
-          <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground/70">{t.categories}</span>
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground/70">{t.categories}</span>
+            <span className="text-xs text-muted-foreground/50">{categories.length}</span>
+          </div>
           <button
             type="button"
             onClick={addCategory}
@@ -563,7 +591,8 @@ export const Whiteboard = () => {
         </div>
 
         <DndContext sensors={sensors} collisionDetection={closestCenter}
-          onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragCancel={() => setActiveId(null)}
+          onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd}
+          onDragCancel={() => { setActiveId(null); setDropTargetCategoryId(null); }}
         >
           {showCreateFrame && (
             <div className="mx-auto mb-5 w-full max-w-2xl">
@@ -579,6 +608,7 @@ export const Whiteboard = () => {
                 <BoardColumn
                   key={category.id}
                   category={category}
+                  dropTarget={dropTargetCategoryId === category.id}
                   tasks={displayedTasks.filter((task) => task.categoryId === category.id)}
                   onRenameCategory={renameCategory}
                   onDeleteCategory={deleteCategory}

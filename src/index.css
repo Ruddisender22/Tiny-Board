@@ -163,4 +163,19 @@
   .kanban-scroll::-webkit-scrollbar-thumb:hover {
     background: hsl(var(--muted-foreground) / 0.55);
   }
+
+  .category-drop-glow {
+    animation: category-glow 1s ease-in-out infinite alternate;
+  }
+
+  @keyframes category-glow {
+    from {
+      border-color: hsl(var(--primary) / 0.35);
+      box-shadow: 0 0 0 1px hsl(var(--primary) / 0.15), 0 0 18px hsl(var(--primary) / 0.16);
+    }
+    to {
+      border-color: hsl(var(--primary) / 0.9);
+      box-shadow: 0 0 0 2px hsl(var(--primary) / 0.3), 0 0 34px hsl(var(--primary) / 0.42);
+    }
+  }
 }

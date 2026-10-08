@@ -19,6 +19,7 @@ export interface Category {
 interface BoardColumnProps {
   category: Category;
   tasks: Task[];
+  dropTarget: boolean;
   onRenameCategory: (id: string, newName: string) => void;
   onDeleteCategory: (id: string) => void;
   onChangeCategoryColor: (id: string, color: TaskColor) => void;
@@ -39,6 +40,7 @@ interface BoardColumnProps {
 export const BoardColumn = ({
   category,
   tasks,
+  dropTarget,
   onRenameCategory,
   onDeleteCategory,
   onChangeCategoryColor,
@@ -109,7 +111,8 @@ export const BoardColumn = ({
       style={style}
       className={cn(
         "flex flex-col bg-card/30 backdrop-blur-xl border border-white/20 shadow-xl rounded-2xl w-[86vw] sm:w-[340px] lg:w-auto lg:flex-[1_1_0%] lg:min-w-[300px] lg:max-w-[520px] max-h-[80vh] flex-shrink-0 transition-opacity",
-        isDragging && "opacity-50"
+        isDragging && "opacity-50",
+        dropTarget && !isDragging && "category-drop-glow"
       )}
     >
       {/* Column Header */}
