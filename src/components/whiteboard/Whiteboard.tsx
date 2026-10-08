@@ -13,7 +13,7 @@ import {
   DragOverlay,
   TouchSensor,
 } from "@dnd-kit/core";
-import { Github, X, HelpCircle, Settings, Sun, Moon, Cloud, Trash2, FolderPlus, MessageSquare, Plus } from "lucide-react";
+import { Github, X, HelpCircle, Settings, Sun, Moon, Cloud, Trash2, FolderPlus, MessageSquare, Plus, Magnet } from "lucide-react";
 import { TaskCard, Task } from "./TaskCard";
 import { BoardColumn, Category, COLUMN_TRANSITION, COLUMN_DRAGGING_TRANSITION } from "./BoardColumn";
 import { CreateTaskFrame, CreateTaskFrameHandle } from "./CreateTaskFrame";
@@ -63,7 +63,13 @@ const rectContains = (rect: DOMRect, point: Point) =>
 /** Which column (and which card inside it) a pointer is over; the card is the one the dragged task is inserted before. */
 const resolveDropTarget = (point: Point, excludeTaskId: string): { categoryId: string; taskId: string | null } | null => {
   const columns = Array.from(document.querySelectorAll<HTMLElement>("[data-category-id]"));
-  const column = columns.find((element) => rectContains(element.getBoundingClientRect(), point));
+  // A little slack below/beside a column makes dropping at its end easy.
+  const column =
+    columns.find((element) => rectContains(element.getBoundingClientRect(), point)) ??
+    columns.find((element) => {
+      const rect = element.getBoundingClientRect();
+      return point.x >= rect.left - 12 && point.x <= rect.right + 12 && point.y >= rect.top && point.y <= rect.bottom + 56;
+    });
   if (!column?.dataset.categoryId) return null;
   const cards = Array.from(column.querySelectorAll<HTMLElement>("[data-task-id]"))
     .filter((element) => element.dataset.taskId !== excludeTaskId);
@@ -365,6 +371,7 @@ export const Whiteboard = () => {
   const [draggingColumnId, setDraggingColumnId] = useState<string | null>(null);
   const [settlingColumnId, setSettlingColumnId] = useState<string | null>(null);
   const [swapHoverId, setSwapHoverId] = useState<string | null>(null);
+  const [canvasWidth, setCanvasWidth] = useState(0);
   const [liveExtent, setLiveExtent] = useState<number | null>(null);
   const [columnSizes, setColumnSizes] = useState<Record<string, ColumnSize>>({});
   const [pendingTask, setPendingTask] = useState<{ name: string; color: TaskColor; tags: string[] } | null>(null);
@@ -399,6 +406,17 @@ export const Whiteboard = () => {
   columnSizesRef.current = columnSizes;
   const columnWidthsRef = useRef(columnWidths);
   columnWidthsRef.current = columnWidths;
+
+  // Keep track of the canvas width (a lone column is centred in it).
+  useEffect(() => {
+    const element = canvasRef.current;
+    if (!element) return;
+    const update = () => setCanvasWidth(element.clientWidth);
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
 
   // Apply theme to DOM
   useEffect(() => {
@@ -565,6 +583,34 @@ export const Whiteboard = () => {
     }
     // Always reachable: directly below the lowest column.
     return best ?? { x: startX, y: clampY(Math.max(...others.map((o) => o.b)) + COLUMN_GAP) };
+  }, [getColumnSize]);
+
+  /** Pull every column towards the top-left so they sit next to each other, keeping their relative arrangement. */
+  const attractColumns = useCallback(() => {
+    const items = categoriesRef.current;
+    if (items.length < 2) return;
+    type Box = { id: string; x: number; y: number; w: number; h: number };
+    const boxes: Box[] = items.map((item) => ({ id: item.id, x: item.x, y: item.y, ...getColumnSize(item) }));
+    const pack = (axis: "x" | "y") => {
+      const across = axis === "x" ? "y" : "x";
+      const along = axis === "x" ? "w" : "h";
+      const acrossLength = axis === "x" ? "h" : "w";
+      const placed: Box[] = [];
+      for (const box of [...boxes].sort((a, b) => a[axis] - b[axis] || a[across] - b[across])) {
+        let position = CANVAS_GRID;
+        for (const other of placed) {
+          const sharesLane = box[across] < other[across] + other[acrossLength] && box[across] + box[acrossLength] > other[across];
+          if (sharesLane) position = Math.max(position, other[axis] + other[along] + COLUMN_GAP);
+        }
+        box[axis] = position;
+        placed.push(box);
+      }
+    };
+    pack("x"); pack("y"); pack("x"); pack("y");
+    setCategories((prev) => prev.map((item) => {
+      const box = boxes.find((candidate) => candidate.id === item.id);
+      return box ? { ...item, x: Math.round(box.x), y: Math.round(box.y) } : item;
+    }));
   }, [getColumnSize]);
 
   const addCategory = useCallback(() => {
@@ -897,6 +943,7 @@ export const Whiteboard = () => {
 
     const start = (id: string, event: React.PointerEvent<HTMLElement>) => {
       if (state) return;
+      if (categoriesRef.current.length < 2) return; // a lone column stays centred
       if (event.pointerType === "mouse" && event.button !== 0) return;
       const category = categoriesRef.current.find((item) => item.id === id);
       const element = columnElementsRef.current[id];
@@ -980,7 +1027,7 @@ export const Whiteboard = () => {
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(String(event.active.id));
     const activeTask = tasks.find((task) => task.id === event.active.id);
-    setDragPreviewCategoryId(activeTask?.categoryId ?? null);
+    setDragPreviewCategoryId(null);
     setDragPreviewTaskId(null);
     pointerRef.current = getEventPoint(event.activatorEvent);
   };
@@ -1110,6 +1157,17 @@ export const Whiteboard = () => {
               <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground/70">{t.categories}</span>
               <span className="text-xs text-muted-foreground/50">{categories.length}</span>
             </div>
+            {categories.length > 1 && (
+              <button
+                type="button"
+                onClick={attractColumns}
+                title={t.attractHint}
+                className="ml-2 inline-flex items-center gap-2 rounded-xl border border-border/70 bg-muted/70 px-4 py-2 text-sm font-semibold text-muted-foreground shadow-sm backdrop-blur transition-all hover:bg-card hover:text-foreground"
+              >
+                <Magnet className="h-4 w-4" />
+                {t.attract}
+              </button>
+            )}
           </div>
         )}
         </div>
@@ -1153,7 +1211,9 @@ export const Whiteboard = () => {
                   key={category.id}
                   dataCategoryId={category.id}
                   category={category}
-                  x={category.x}
+                  x={categories.length === 1 && canvasWidth > 0
+                    ? Math.max(0, Math.round((canvasWidth - Math.min(760, canvasWidth - 48)) / 2))
+                    : category.x}
                   y={category.y}
                   dropTarget={swapHoverId === category.id || (Boolean(activeId) && dragPreviewCategoryId === category.id && activeTaskCategoryId !== category.id)}
                   dragging={draggingColumnId === category.id}
@@ -1173,6 +1233,7 @@ export const Whiteboard = () => {
                   selectionMode={Boolean(pendingTask)}
                   onSelectCategory={selectCategoryForPendingTask}
                   previewTaskId={dragPreviewCategoryId === category.id ? dragPreviewTaskId : null}
+                  previewEnd={Boolean(activeId) && dragPreviewCategoryId === category.id && dragPreviewTaskId === null}
                   onToggleTask={toggleTask}
                   onDeleteTask={deleteTask}
                   onRenameTask={renameTask}

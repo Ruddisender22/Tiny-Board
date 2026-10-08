@@ -24,7 +24,12 @@ Tiny Board is local by design. It does not require an account or backend, and ta
 
 ## Releases
 
-- **v1.26.0 (Current Release)**:
+- **v1.27.0 (Current Release)**:
+  - Added an Attract button in the top bar that pulls all columns together.
+  - Dropping a task at the end of a column shows the insertion marker and is easier to hit.
+  - A single column is centred on the board.
+
+- **v1.26.0**:
   - Hold a dragged column over another for 2 seconds to swap their positions; each keeps its own size.
 
 - **v1.25.0**:

@@ -43,6 +43,8 @@ interface BoardColumnProps {
   selectionMode: boolean;
   onSelectCategory: (id: string) => void;
   previewTaskId: string | null;
+  /** Show the insertion marker at the end of the column. */
+  previewEnd: boolean;
   onRenameCategory: (id: string, newName: string) => void;
   onDeleteCategory: (id: string) => void;
   onChangeCategoryColor: (id: string, color: TaskColor) => void;
@@ -79,6 +81,7 @@ export const BoardColumn = ({
   selectionMode,
   onSelectCategory,
   previewTaskId,
+  previewEnd,
   onRenameCategory,
   onDeleteCategory,
   onChangeCategoryColor,
@@ -122,7 +125,7 @@ export const BoardColumn = ({
     transform: `translate3d(${x}px, ${y}px, 0)`,
     transition: dragging ? COLUMN_DRAGGING_TRANSITION : COLUMN_TRANSITION,
     zIndex: raised ? 70 : undefined,
-    width: isSingleColumn ? `min(760px, calc(100% - ${Math.round(x) + 24}px))` : width,
+    width: isSingleColumn ? "min(760px, calc(100% - 48px))" : width,
     minWidth: isSingleColumn ? 0 : minWidth,
   };
 
@@ -291,6 +294,7 @@ export const BoardColumn = ({
       {/* Column Body */}
       <div className={cn(
         "board-column-body flex flex-col gap-3 p-3",
+        tasks.length > 0 && "pb-5",
         tasks.length === 0 && "board-column-empty-body",
         isSingleColumn && "board-column-single-body",
         selectionMode && "pointer-events-none"
@@ -314,6 +318,7 @@ export const BoardColumn = ({
               </motion.div>
             ))}
           </AnimatePresence>
+          {previewEnd && <div className="task-drop-preview" aria-hidden />}
         </SortableContext>
       </div>
       

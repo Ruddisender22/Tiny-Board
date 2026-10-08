@@ -13,6 +13,8 @@ export const translations = {
     view: "View",
     categories: "Categories",
     addCategory: "Add category",
+    attract: "Attract",
+    attractHint: "Pull all columns together",
     categoryNamePrompt: "Category name",
     categoryDialogTitle: "Create a category",
     categoryNamePlaceholder: "e.g. In progress",
@@ -53,6 +55,14 @@ export const translations = {
     deleteAll: "Delete all",
     deleteAllConfirm: "Delete all tasks? This cannot be undone.",
     changelogEntries: [
+      {
+        version: "1.27.0",
+        changes: [
+          "New Attract button in the top bar pulls all columns together",
+          "Dropping a task at the end of a column now shows the insertion marker and is easier to hit",
+          "A single column is now centred on the board",
+        ],
+      },
       {
         version: "1.26.0",
         changes: [
@@ -277,6 +287,8 @@ export const translations = {
     view: "Vista",
     categories: "Categorías",
     addCategory: "Añadir categoría",
+    attract: "Atraer",
+    attractHint: "Juntar todas las columnas",
     categoryNamePrompt: "Nombre de la categoría",
     categoryDialogTitle: "Crear una categoría",
     categoryNamePlaceholder: "p. ej. En progreso",
@@ -317,6 +329,14 @@ export const translations = {
     deleteAll: "Eliminar todo",
     deleteAllConfirm: "¿Eliminar todas las tareas? Esto no se puede deshacer.",
     changelogEntries: [
+      {
+        version: "1.27.0",
+        changes: [
+          "Nuevo botón Atraer en la barra superior que junta todas las columnas",
+          "Al soltar una tarea al final de una columna ahora aparece el marcador de posición y es más fácil acertar",
+          "Una única columna queda centrada en la pizarra",
+        ],
+      },
       {
         version: "1.26.0",
         changes: [
