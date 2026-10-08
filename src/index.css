@@ -174,8 +174,9 @@
     position: sticky;
     top: 0;
     z-index: 30;
-    margin-inline: -1rem;
-    padding: 1rem 1rem 0.75rem;
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    padding: 0.65rem 1rem 0.55rem;
     background: hsl(var(--background) / 0.86);
     backdrop-filter: blur(18px);
   }
@@ -193,7 +194,7 @@
   .radial-actions {
     position: fixed;
     right: 1.5rem;
-    bottom: 1.5rem;
+    bottom: 2.75rem;
     z-index: 90;
     width: 72px;
     height: 72px;

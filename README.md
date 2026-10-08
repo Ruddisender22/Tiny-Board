@@ -24,7 +24,12 @@ Tiny Board is local by design. It does not require an account or backend, and ta
 
 ## Releases
 
-- **v1.20.0 (Current Release)**:
+- **v1.21.0 (Current Release)**:
+  - Smoothed freeform column dragging with live transform movement.
+  - Added reliable column swapping when dropping one column over another.
+  - Removed artificial canvas edge margins.
+
+- **v1.20.0**:
   - Removed the internal column scrollbar so the window handles vertical scrolling.
 
 - **v1.19.0**:

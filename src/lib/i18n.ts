@@ -54,6 +54,14 @@ export const translations = {
     deleteAllConfirm: "Delete all tasks? This cannot be undone.",
     changelogEntries: [
       {
+        version: "1.21.0",
+        changes: [
+          "Smoothed freeform column dragging with live transform movement",
+          "Added reliable column swapping when dropping one column over another",
+          "Removed artificial canvas edge margins and fixed drag cleanup feedback",
+        ],
+      },
+      {
         version: "1.20.0",
         changes: [
           "Removed the internal column scrollbar so the window handles vertical scrolling",
@@ -270,6 +278,14 @@ export const translations = {
     deleteAll: "Eliminar todo",
     deleteAllConfirm: "¿Eliminar todas las tareas? Esto no se puede deshacer.",
     changelogEntries: [
+      {
+        version: "1.21.0",
+        changes: [
+          "Suavizado el movimiento libre de columnas con transform en tiempo real",
+          "Añadida la sustitución fiable al soltar una columna sobre otra",
+          "Eliminados los márgenes artificiales del canvas y mejorada la limpieza del drag",
+        ],
+      },
       {
         version: "1.20.0",
         changes: [

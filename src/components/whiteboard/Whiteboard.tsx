@@ -14,10 +14,6 @@ import {
   DragOverlay,
   TouchSensor,
 } from "@dnd-kit/core";
-import {
-  SortableContext,
-  horizontalListSortingStrategy,
-} from "@dnd-kit/sortable";
 import { Github, X, HelpCircle, Settings, Sun, Moon, Cloud, Trash2, FolderPlus, MessageSquare, Plus } from "lucide-react";
 import { TaskCard, Task } from "./TaskCard";
 import { BoardColumn, Category } from "./BoardColumn";
@@ -41,7 +37,7 @@ const DEFAULT_COLUMN_WIDTH = 360;
 const MIN_COLUMN_WIDTH = 280;
 const MAX_COLUMN_WIDTH = 640;
 const CANVAS_GRID = 24;
-const CANVAS_PADDING = 24;
+const CANVAS_PADDING = 0;
 const COLUMN_HEIGHT = 760;
 
 const DEFAULT_CATEGORY: Category = {
@@ -355,6 +351,7 @@ export const Whiteboard = () => {
   const frameRef = useRef<CreateTaskFrameHandle>(null);
   const categoryNameInputRef = useRef<HTMLInputElement>(null);
   const dragStartPositionsRef = useRef<Record<string, { x: number; y: number }>>({});
+  const columnDropTargetRef = useRef<string | null>(null);
   const createAnchorRef = useRef<HTMLDivElement>(null);
   const isTouch = useIsTouchDevice();
 
@@ -586,10 +583,25 @@ export const Whiteboard = () => {
     if (categories.some((category) => category.id === active.id)) {
       const activeCategory = categories.find((category) => category.id === active.id);
       if (!activeCategory) return;
-      const start = dragStartPositionsRef.current[String(active.id)] ?? activeCategory;
-      const next = resolveColumnPosition(activeCategory, start.x + event.delta.x, start.y + event.delta.y);
-      setCategories((items) => items.map((category) => category.id === active.id ? { ...category, ...next } : category));
-      setSwappedCategoryId(null);
+      const targetId = columnDropTargetRef.current;
+      if (targetId && targetId !== activeCategory.id) {
+        setCategories((items) => {
+          const target = items.find((category) => category.id === targetId);
+          if (!target) return items;
+          return items.map((category) => {
+            if (category.id === activeCategory.id) return { ...category, x: target.x, y: target.y };
+            if (category.id === targetId) return { ...category, x: activeCategory.x, y: activeCategory.y };
+            return category;
+          });
+        });
+        setSwappedCategoryId(targetId);
+        window.setTimeout(() => setSwappedCategoryId(null), 700);
+      } else {
+        const start = dragStartPositionsRef.current[String(active.id)] ?? activeCategory;
+        const next = resolveColumnPosition(activeCategory, start.x + event.delta.x, start.y + event.delta.y);
+        setCategories((items) => items.map((category) => category.id === active.id ? { ...category, ...next } : category));
+      }
+      columnDropTargetRef.current = null;
       dragStartPositionsRef.current = {};
       return;
     }
@@ -623,6 +635,7 @@ export const Whiteboard = () => {
     setDragPreviewTaskId(null);
     const activeCategory = categories.find((category) => category.id === event.active.id);
     if (activeCategory) dragStartPositionsRef.current = { [activeCategory.id]: { x: activeCategory.x, y: activeCategory.y } };
+    columnDropTargetRef.current = null;
   };
 
   const handleDragOver = (event: DragOverEvent) => {
@@ -642,11 +655,13 @@ export const Whiteboard = () => {
 
   const handleDragMove = (event: DragMoveEvent) => {
     if (categories.some((category) => category.id === event.active.id)) {
-      const activeCategory = categories.find((category) => category.id === event.active.id);
-      const start = activeCategory && dragStartPositionsRef.current[activeCategory.id];
-      if (!activeCategory || !start) return;
-      const next = resolveColumnPosition(activeCategory, start.x + event.delta.x, start.y + event.delta.y);
-      setCategories((items) => items.map((category) => category.id === activeCategory.id ? { ...category, ...next } : category));
+      const translated = event.active.rect.current.translated;
+      if (!translated) return;
+      const element = document.elementFromPoint(translated.left + translated.width / 2, translated.top + translated.height / 2);
+      const target = element?.closest<HTMLElement>("[data-category-id]");
+      const targetId = target?.dataset.categoryId ?? null;
+      columnDropTargetRef.current = targetId === String(event.active.id) ? null : targetId;
+      setDropTargetCategoryId(columnDropTargetRef.current);
       return;
     }
     const translated = event.active.rect.current.translated;
@@ -758,7 +773,7 @@ export const Whiteboard = () => {
 
         <DndContext sensors={sensors} collisionDetection={closestCenter}
           onDragStart={handleDragStart} onDragMove={handleDragMove} onDragOver={handleDragOver} onDragEnd={handleDragEnd}
-          onDragCancel={() => { setActiveId(null); setDropTargetCategoryId(null); setDragPreviewCategoryId(null); setDragPreviewTaskId(null); setSwappedCategoryId(null); }}
+          onDragCancel={() => { setActiveId(null); setDropTargetCategoryId(null); setDragPreviewCategoryId(null); setDragPreviewTaskId(null); setSwappedCategoryId(null); columnDropTargetRef.current = null; dragStartPositionsRef.current = {}; }}
         >
           {pendingTask && (
             <>
@@ -801,8 +816,7 @@ export const Whiteboard = () => {
               )}
             </div>
           </div>
-          <SortableContext items={categories.map((category) => category.id)} strategy={horizontalListSortingStrategy}>
-            <div className="whiteboard-canvas relative min-h-[calc(100vh-220px)] w-full pb-32">
+          <div className="whiteboard-canvas relative min-h-[calc(100vh-220px)] w-full pb-32">
               {categories.map((category) => (
                 <BoardColumn
                   key={category.id}
@@ -834,8 +848,7 @@ export const Whiteboard = () => {
                   lang={lang}
                 />
               ))}
-            </div>
-          </SortableContext>
+          </div>
           <DragOverlay dropAnimation={{ duration: 200, easing: "cubic-bezier(0.18, 0.67, 0.6, 1.22)" }}>
             {activeId ? (() => {
               const activeCategory = categories.find((category) => category.id === activeId);

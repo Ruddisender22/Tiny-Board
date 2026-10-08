@@ -90,7 +90,7 @@ export const BoardColumn = ({
   const style = {
     left: x,
     top: y,
-    transform: undefined,
+    transform: CSS.Translate.toString(transform),
     zIndex: isDragging ? 80 : undefined,
   };
   
@@ -155,7 +155,7 @@ export const BoardColumn = ({
       className={cn(
         "board-column absolute flex flex-col rounded-2xl max-h-[80vh] flex-shrink-0 transition-[box-shadow,border-color]",
         isSingleColumn && "board-column-single",
-        isDragging && "opacity-100",
+        isDragging && "z-50 opacity-100 will-change-transform",
         dropTarget && !isDragging && "category-drop-glow",
         swapPulse && "category-swap-pulse",
         selectionMode && "category-selection-glow relative z-50 cursor-pointer"
